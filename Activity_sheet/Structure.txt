@@ -1,0 +1,25 @@
+Activity sheet/
+│ 
+│   
+├── templates/
+│   └── index.html
+│   └── 404.html
+├── data/
+│    └── Activity_MasterData.json
+│
+├── static ── manifest.json 
+│     ├── assets 
+│     │    └── favicon
+│     │              ├──  favicon.ico
+│     │              └──  favicon192x192
+│     │
+│     ├── css 
+│     │    ├── index.css
+│     │    └── 404.css
+│     └── js
+│          └── index.js
+│
+├── app.py          
+├── requirements.txt
+├── README.txt
+└── Structure.txt

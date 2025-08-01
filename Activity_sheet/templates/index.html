@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <title>Activity sheet</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <meta name="theme-color" content="#0d6efd">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" href="static/assets/favicon/favicon.ico" type="image/x-icon">
+  <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='assets/favicon/favicon192x192.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+
+</head>
+<body>
+  <h1>Activity sheet</h1>
+  <h6 style="display: flex; align-items: center; gap: 8px; justify-content: center;">By Cory</h6>
+  <button class="toggle-all" id="toggleAllBtn">Expand all sections</button>
+  <button id="open-end-modal" class="end-btn">End activity</button>
+  <div id="cinnosti-container"></div>
+
+  <!-- Modal for detail of activity -->
+  <div id="modal">
+    <div id="modal-content">
+      <div id="modal-close">&times;</div>
+      <div id="modal-barcode"></div>
+      <div id="modal-label"></div>
+      <div id="modal-iframe-container" style="margin-top: 30px; height: 400px;">
+        <iframe id="modal-iframe"
+                src=""
+                width="100%"
+                height="100%"
+                style="border: 1px solid #ccc; border-radius: 8px;"
+                allow="camera *; microphone *">
+        </iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for end activity -->
+  <div id="modal-end">
+    <div id="modal-content-end">
+      <div id="modal-end-close">&times;</div>
+      <div id="modal-end-iframe-container" style="margin-top: 20px; height: 500px;">
+        <iframe id="modal-end-iframe"
+                src="https://example.com"
+                width="100%"
+                height="100%"
+                style="border: 1px solid #ccc; border-radius: 8px;"
+                allow="camera *; microphone *">
+        </iframe>
+      </div>
+    </div>
+  </div>
+  <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# External libraries (must be installed using pip)
+
+- flask
+
+# Standard Python libraries (included with the language – no installation required)
+
+- json  
+- os
