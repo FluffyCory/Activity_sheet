@@ -1,0 +1,17 @@
+Activity sheet/
+│ 
+│   
+├── templates/
+│   └── index.html
+│   └── 404.html
+├── data/
+│    └── Activity_MasterData.json
+│
+├── static ── manifest.json 
+│     └── assets 
+│            └── favicon
+│                   └──  favicon.ico
+├── app.py          └──  favicon192x192
+├── requirements.txt
+├── README.txt
+└── Structure.txt
