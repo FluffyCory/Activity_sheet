@@ -1,8 +1,0 @@
-# Externí knihovny (nutné nainstalovat pomocí pip)
-
--flask
-
-#Standardní knihovny Pythonu (součást jazyka – není nutná instalace)
-
--json
--os
