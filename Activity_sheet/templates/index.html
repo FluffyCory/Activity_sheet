@@ -1,59 +1,546 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="UTF-8" />
-  <title>Activity sheet</title>
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-  <meta name="theme-color" content="#0d6efd">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="icon" href="static/assets/favicon/favicon.ico" type="image/x-icon">
-  <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='assets/favicon/favicon192x192.png') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+<meta charset="UTF-8" />
+<title>Activity sheet</title>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+<meta name="theme-color" content="#0d6efd">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<link rel="icon" href="static\assets\favicon\favicon.ico" type="image/x-icon">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='assets/favicon/favicon192x192.png') }}">
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+body {
+  font-family: 'Inter', sans-serif;
+  max-width: 1200px;
+  margin: 50px auto;
+  padding: 0 20px;
+  background: linear-gradient(135deg, #e9ecef, #f8f9fa);
+  color: #343a40;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 2.5em;
+  color: #1a1a1a;
+  text-shadow: 1px 1px 0 #fff;
+}
+
+h6{
+  text-align: center;
+  margin-top: 10px;
+  margin-bottom: 50px;
+  font-size: 0.5em;
+  color: #1a1a1a;
+  text-shadow: 1px 1px 0 #fff;
+}
+
+section {
+  margin-bottom: 50px;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 30px;
+}
+
+h2 {
+  cursor: pointer;
+  color: #212529;
+  user-select: none;
+  font-size: 1.6em;
+  font-weight: 600;
+  transition: color 0.3s ease;
+  text-align: center;
+  position: relative;
+  padding-bottom: 10px;
+  margin: 40px 0 20px;
+}
+
+h2::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 3px;
+  background-color: #0d6efd;
+  margin: 12px auto 0;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+h2::before {
+  content: "📁";
+  margin-right: 8px;
+}
+
+h2:hover::after {
+  width: 80px;
+}
+
+.content {
+  display: none;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 25px;
+  padding: 20px 0;
+}
+
+.content.active {
+  display: grid;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.cinnost {
+  background: #ffffffcc;
+  border: 1px solid #ced4da;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.cinnost::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to top right, #0d6efd33, transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 0;
+}
+
+.cinnost:hover::after {
+  opacity: 1;
+}
+
+.cinnost:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 18px rgba(0, 123, 255, 0.2);
+  border-color: #0d6efd;
+}
+
+.cinnost svg {
+  width: 100%;
+  height: 70px;
+  display: block;
+  margin-top: 10px;
+  pointer-events: none;
+  z-index: 1;
+  position: relative;
+}
+
+.cinnost div {
+  position: relative;
+  z-index: 1;
+  font-size: 1em;
+  font-weight: 500;
+  color: #333;
+}
+
+.toggle-all {
+  display: block;               /* Změna z inline-block na block */
+  margin: 0 auto 40px auto;     /* Automatické centrování horizontálně */
+  padding: 14px 28px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(90deg, #0d6efd, #0b5ed7);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  transition: background 0.3s ease, transform 0.2s;
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+  position: relative;
+  text-align: center;
+}
+
+.toggle-all:hover {
+  background: linear-gradient(90deg, #0b5ed7, #0a58ca);
+  transform: scale(1.05);
+}
+
+
+
+/* Modal styl – glassmorphism */
+#modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+#modal.active {
+  display: flex;
+  animation: fadeIn 0.3s ease;
+}
+
+#modal-content {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 40px;
+  border-radius: 12px;
+  text-align: center;
+  position: relative;
+  max-width: 520px;
+  width: 90%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+#modal-close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+  color: #888;
+  transition: color 0.2s ease;
+}
+
+#modal-close:hover {
+  color: #111;
+}
+
+#modal-barcode svg {
+  width: 100%;
+  height: 160px;
+}
+
+#modal-label {
+  margin-top: 25px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #212529;
+}
+
+
+/*modal pro ukončení činosti */
+
+.end-btn {
+  display: block;           /* Změní z inline na blokový prvek */
+  margin: 30px auto;        /* Automatické zarovnání na střed + horní mezera */
+  padding: 10px 18px;
+  background: #dc3545;
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-size: 16px;
+}
+
+.end-btn:hover {
+  background: #c82333;
+}
+
+#modal-end {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+#modal-end.active {
+  display: flex;
+}
+
+#modal-content-end {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  height: 90vh; /* <-- Větší výška */
+  max-width: 1000px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+#modal-end-iframe-container {
+  flex-grow: 1; /* <-- Nechť zabere všechen zbylý prostor */
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+#modal-end-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+@media screen and (max-width: 768px) {
+  /* Skrytí iframe a tlačítka ukončení činnosti na telefonech */
+  #modal-iframe-container,
+  .end-btn {
+    display: none !important;
+  }
+
+  #modal-content {
+    padding: 20px;
+  }
+
+  #modal-label {
+    font-size: 18px;
+  }
+}
+
+
+/* Footer: compact, minimalist, centered */
+.site-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 0;
+  margin: 40px 0 20px 0;
+  font-size: 0.9em;
+  color: #495057;
+  background: transparent;
+}
+
+.site-footer .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #212529;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.site-footer a {
+  color: #0d6efd;
+  text-decoration: none;
+}
+
+.site-footer a:hover { text-decoration: underline; }
+
+.site-footer .icon { width: 18px; height: 18px; display: inline-block; vertical-align: middle; opacity: .95; }
+
+.site-footer small { color: #6c757d; }
+
+@media (max-width: 480px) {
+  .site-footer { padding: 12px 10px; font-size: 0.85em; flex-direction: column; gap: 6px; }
+}
+
+</style>
 </head>
 <body>
-  <h1>Activity sheet</h1>
-  <h6 style="display: flex; align-items: center; gap: 8px; justify-content: center;">By Cory</h6>
-  <button class="toggle-all" id="toggleAllBtn">Expand all sections</button>
-  <button id="open-end-modal" class="end-btn">End activity</button>
-  <div id="cinnosti-container"></div>
 
-  <!-- Modal for detail of activity -->
-  <div id="modal">
-    <div id="modal-content">
-      <div id="modal-close">&times;</div>
-      <div id="modal-barcode"></div>
-      <div id="modal-label"></div>
-      <div id="modal-iframe-container" style="margin-top: 30px; height: 400px;">
-        <iframe id="modal-iframe"
-                src=""
-                width="100%"
-                height="100%"
-                style="border: 1px solid #ccc; border-radius: 8px;"
-                allow="camera *; microphone *">
-        </iframe>
-      </div>
+<h1>Activity sheet</h1>
+<h6 style="display: flex; align-items: center; gap: 8px; justify-content: center;">
+  By Cory for
+  <img src="https://expocz.baselinker.com/wp-content/uploads/2024/02/Vector-1024x212.png" alt="MLogo" style="margin-left: -18px;width: 85px; height: 20px;">
+</h6>
+
+
+<button class="toggle-all" id="toggleAllBtn">Rozbalit všechny sekce</button>
+
+<button id="open-end-modal" class="end-btn">Ukončit činnost</button>
+
+<div id="cinnosti-container"></div>
+
+<!-- Modal -->
+<div id="modal">
+  <div id="modal-content">
+    <div id="modal-close">&times;</div>
+    <div id="modal-barcode"></div>
+    <div id="modal-label"></div>
+
+    <div id="modal-iframe-container" style="margin-top: 30px; height: 400px;">
+      <iframe id="modal-iframe"
+              src=""
+              width="100%"
+              height="100%"
+              style="border: 1px solid #ccc; border-radius: 8px;"
+              allow="camera *; microphone *">
+      </iframe>
     </div>
   </div>
+</div>
 
-  <!-- Modal for end activity -->
-  <div id="modal-end">
-    <div id="modal-content-end">
-      <div id="modal-end-close">&times;</div>
-      <div id="modal-end-iframe-container" style="margin-top: 20px; height: 500px;">
-        <iframe id="modal-end-iframe"
-                src="https://example.com"
-                width="100%"
-                height="100%"
-                style="border: 1px solid #ccc; border-radius: 8px;"
-                allow="camera *; microphone *">
-        </iframe>
-      </div>
+<!-- Modal pro ukončení činnosti -->
+<div id="modal-end">
+  <div id="modal-content-end">
+    <div id="modal-end-close">&times;</div>
+    <div id="modal-end-iframe-container" style="margin-top: 20px; height: 500px;">
+      <iframe id="modal-end-iframe"
+              src="https://whm.prg1.prod.mw.v2.mailwise.app/productivity/overview/detail/Inbound/PE-p%C5%99%C3%ADjem"  <!-- Sem dej URL aplikace -->
+              width="100%"
+              height="100%"
+              style="border: 1px solid #ccc; border-radius: 8px;"
+              allow="camera *; microphone *">
+      </iframe>
     </div>
   </div>
-  <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+</div>
+<footer class="site-footer" role="contentinfo" aria-label="Footer">
+  <a class="brand" href="https://github.com/FluffyCory" target="_blank" rel="noopener noreferrer" aria-label="GitHub - FluffyCory">
+    <!-- GitHub mark (clickable) -->
+    <svg class="icon" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.58.82-2.14-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 012-.27c.68 0 1.36.09 2 .27 1.53-1.03 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.14 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.15.46.55.38A8 8 0 0016 8c0-4.42-3.58-8-8-8z"/>
+    </svg>
+  </a>
+  <small>© 2025 Cory</small>
+</footer>
+
+<script>
+  async function loadCinnosti() {
+    const response = await fetch('/api/cinnosti');
+    const data = await response.json();
+
+    const container = document.getElementById('cinnosti-container');
+    container.innerHTML = '';
+
+    data.sekce.forEach(sekce => {
+      const sekceDiv = document.createElement('section');
+
+      const nadpis = document.createElement('h2');
+      nadpis.textContent = `${sekce.nazev} (${sekce.cinnosti.length})`;
+      sekceDiv.appendChild(nadpis);
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'content';
+
+      sekce.cinnosti.forEach(cinnost => {
+        const div = document.createElement('div');
+        div.className = 'cinnost';
+
+        const label = document.createElement('div');
+        label.textContent = `${cinnost.nazev} (ID: ${cinnost.id})`;
+
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.id = `barcode-${cinnost.id.replace(/[^a-zA-Z0-9]/g, '')}`;
+
+        div.appendChild(label);
+        div.appendChild(svg);
+        contentDiv.appendChild(div);
+
+        JsBarcode(svg, cinnost.id, {
+          format: "code128",
+          width: 2,
+          height: 50,
+          displayValue: false
+        });
+
+        // Klikací event na otevření modalu se zvětšeným kódem
+        div.addEventListener('click', () => {
+          openModal(cinnost);
+        });
+      });
+
+      sekceDiv.appendChild(contentDiv);
+      container.appendChild(sekceDiv);
+
+      // Toggle sekce po kliknutí na nadpis
+      nadpis.addEventListener('click', () => {
+        contentDiv.classList.toggle('active');
+      });
+    });
+
+    // Tlačítko pro rozbalení/sbalení všech sekcí
+    const toggleAllBtn = document.getElementById('toggleAllBtn');
+    toggleAllBtn.onclick = () => {
+      const vsechnyObsahy = document.querySelectorAll('.content');
+      const necoNeniAktivni = Array.from(vsechnyObsahy).some(div => !div.classList.contains('active'));
+      vsechnyObsahy.forEach(div => {
+        if (necoNeniAktivni) {
+          div.classList.add('active');
+        } else {
+          div.classList.remove('active');
+        }
+      });
+      toggleAllBtn.textContent = necoNeniAktivni ? 'Sbalit všechny sekce' : 'Rozbalit všechny sekce';
+    };
+  }
+
+  // Funkce na otevření modalu se zvětšeným čárovým kódem
+  function openModal(cinnost) {
+  const modal = document.getElementById('modal');
+  const modalBarcode = document.getElementById('modal-barcode');
+  const modalLabel = document.getElementById('modal-label');
+  const modalIframe = document.getElementById('modal-iframe');
+
+  modalBarcode.innerHTML = '';
+  modalLabel.textContent = `${cinnost.nazev} (ID: ${cinnost.id})`;
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.id = `modal-barcode-svg`;
+  modalBarcode.appendChild(svg);
+
+  JsBarcode(svg, cinnost.id, {
+    format: "code128",
+    width: 4,
+    height: 100,
+    displayValue: true,
+    fontSize: 18
+  });
+
+  // ⚡️ Nastavení URL aplikace do iframe (předpoklad: akceptuje ?id=)
+  modalIframe.src = `https://whm.prg1.prod.mw.v2.mailwise.app/productivity/overview/detail/Inbound/PE-p%C5%99%C3%ADjem?id=${encodeURIComponent(cinnost.id)}`;
+
+  modal.classList.add('active');
+}
+
+  // Zavření modalu
+  document.getElementById('modal-close').addEventListener('click', () => {
+    document.getElementById('modal').classList.remove('active');
+  });
+
+  // Zavření modalu klikem mimo obsah
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) {
+      document.getElementById('modal').classList.remove('active');
+    }
+  });
+
+    // Otevřít modal
+  document.getElementById('open-end-modal').addEventListener('click', () => {
+    document.getElementById('modal-end').classList.add('active');
+  });
+
+  // Zavřít modal kliknutím na křížek
+  document.getElementById('modal-end-close').addEventListener('click', () => {
+    document.getElementById('modal-end').classList.remove('active');
+  });
+
+  // Zavřít modal kliknutím mimo obsah
+  document.getElementById('modal-end').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+      document.getElementById('modal-end').classList.remove('active');
+    }
+  });
+
+  
+
+  loadCinnosti();
+</script>
+
 </body>
 </html>
