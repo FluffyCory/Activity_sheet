@@ -1,0 +1,30 @@
+{
+  "sekce": [
+    {
+      "nazev": "Ukázková sekce",
+      "cinnosti": [
+        {
+          "id": "(EX)001",
+          "nazev": "Administrativa"
+        },
+        {
+          "id": "(EX)002",
+          "nazev": "Příjem"
+        }
+      ]
+    },
+    {
+      "nazev": "Další sekce",
+      "cinnosti": [
+        {
+          "id": "(EX)101",
+          "nazev": "Balení"
+        },
+        {
+          "id": "(EX)102",
+          "nazev": "Expedice"
+        }
+      ]
+    }
+  ]
+}

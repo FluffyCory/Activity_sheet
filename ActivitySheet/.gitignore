@@ -1,0 +1,12 @@
+# přenosný Python (stáhni z python.org – viz README)
+python/
+# místní data a nastavení každého PC
+config.json
+activitysheet.port
+edge-profil/
+data/lokalni.json
+data/zalohy/
+*.log
+__pycache__/
+# logo firmy (soubor si dej sám do web/static/assets/logo.png)
+web/static/assets/logo.png

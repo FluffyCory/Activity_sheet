@@ -1,0 +1,2239 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8" />
+<title>Activity sheet</title>
+<script src="/static/js/JsBarcode.all.min.js"></script>
+<script src="/static/js/as-dialog.js"></script>
+<script src="/static/js/as-fx.js"></script>
+<script src="/static/js/as-window.js"></script>
+<script>
+  // logo je lokální soubor (web/static/assets/logo.png); když chybí, ukáže se jen text
+  document.addEventListener('DOMContentLoaded', () => {
+    const img = document.getElementById('brand-logo');
+    const fail = () => { img.hidden = true; document.getElementById('brand-text').hidden = false; };
+    if (img.complete && !img.naturalWidth) fail(); else img.addEventListener('error', fail);
+  });
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="manifest" href="/static/manifest.json">
+<meta name="theme-color" content="#0d6efd">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<link rel="icon" href="static\assets\favicon\favicon.ico" type="image/x-icon">
+<link rel="icon" type="image/png" sizes="192x192" href="/static/assets/favicon/favicon192x192.png">
+
+<style>
+@import url('/static/fonts/inter.css');
+
+body {
+  font-family: 'Inter', sans-serif;
+  max-width: 1200px;
+  margin: 50px auto;
+  padding: 0 20px;
+  background: linear-gradient(135deg, #e9ecef, #f8f9fa);
+  color: #343a40;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 10px;
+  font-size: 2.5em;
+  color: #1a1a1a;
+  text-shadow: 1px 1px 0 #fff;
+}
+
+h6{
+  text-align: center;
+  margin-top: 10px;
+  margin-bottom: 50px;
+  font-size: 0.5em;
+  color: #1a1a1a;
+  text-shadow: 1px 1px 0 #fff;
+}
+
+section {
+  margin-bottom: 50px;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 30px;
+}
+
+h2 {
+  cursor: pointer;
+  color: #212529;
+  user-select: none;
+  font-size: 1.6em;
+  font-weight: 600;
+  transition: color 0.3s ease;
+  text-align: center;
+  position: relative;
+  padding-bottom: 10px;
+  margin: 40px 0 20px;
+}
+
+h2::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 3px;
+  background-color: var(--section-color, #0d6efd);
+  margin: 12px auto 0;
+  border-radius: 2px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+h2::before {
+  content: "📁";
+  margin-right: 8px;
+}
+
+h2.oblibene-heading::before {
+  content: "⭐";
+}
+
+h2.search-results-heading::before {
+  content: "🔍";
+}
+
+h2:hover::after {
+  width: 80px;
+}
+
+.content {
+  display: none;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 25px;
+  padding: 20px 0;
+}
+
+.content.active {
+  display: grid;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.cinnost {
+  background: #ffffffcc;
+  border: 1px solid #ced4da;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.cinnost::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to top right, #0d6efd33, transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 0;
+}
+
+.cinnost:hover::after {
+  opacity: 1;
+}
+
+.cinnost:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 18px rgba(0, 123, 255, 0.2);
+  border-color: #0d6efd;
+}
+
+.cinnost svg {
+  width: 100%;
+  height: 70px;
+  display: block;
+  margin-top: 10px;
+  pointer-events: none;
+  z-index: 1;
+  position: relative;
+}
+
+.cinnost div {
+  position: relative;
+  z-index: 1;
+  font-size: 1em;
+  font-weight: 500;
+  color: #333;
+}
+
+.cinnost-meta {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: #5a6773;
+}
+
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 12px;
+  margin-top: 10px;
+  border-radius: 999px;
+  color: white;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background-color: #0d6efd;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-transform: capitalize;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+}
+
+.toast-container {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 12000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  min-width: 280px;
+  max-width: 360px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.95);
+  color: white;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transform: translateX(24px);
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: auto;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast { position: relative; padding-right: 44px; }
+body.modal-open .toast-container { display: none; }   /* nepřekrývat okno činnosti */
+.toast.info { background: rgba(15, 23, 42, 0.95); }
+.toast-close {
+  position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border: none; border-radius: 8px;
+  background: transparent; color: rgba(255, 255, 255, .75); display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.toast-close:hover { background: rgba(255, 255, 255, .14); color: #fff; }
+.toast .toast-message:last-child { margin-bottom: 0; }
+
+.toast.success {
+  background: linear-gradient(135deg,#16a34a,#059669);
+  border-color: rgba(0,0,0,0.08);
+  box-shadow: 0 12px 30px rgba(5, 150, 105, 0.18);
+}
+
+.toast-title {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.toast-message {
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 10px;
+}
+
+.toast-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.toast-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #0d6efd;
+  color: white;
+}
+
+.toast-btn-secondary {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.search-panel {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 24px auto;
+}
+
+.toast-refresh-circle {
+  width: 54px;
+  height: 54px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg,#0d6efd,#2563eb);
+  border: 1px solid rgba(255,255,255,0.14);
+  box-shadow: 0 10px 24px rgba(13,110,253,0.3);
+  color: white;
+  cursor: pointer;
+  padding: 6px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.toast-refresh-circle:hover {
+  transform: scale(1.06);
+  box-shadow: 0 12px 28px rgba(13,110,253,0.34);
+}
+
+.toast-refresh-circle img {
+  width: 24px;
+  height: 24px;
+  display: block;
+  object-fit: contain;
+}
+
+.search-shell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  min-height: 52px;
+  transition: width 0.42s cubic-bezier(0.2, 0.85, 0.2, 1);
+  overflow: visible;
+}
+
+.search-shell.is-open {
+  width: min(340px, 100%);
+}
+
+.search-toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0d6efd, #2563eb);
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.24);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.search-toggle:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 34px rgba(37, 99, 235, 0.3);
+}
+
+.search-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.close-icon {
+  display: none;
+}
+
+.search-toggle-icon.star-icon {
+  display: none;
+}
+
+.search-shell.mode-oblibene .search-toggle {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 14px 30px rgba(245, 158, 11, 0.28);
+}
+
+.search-input-wrap {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 48px;
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(12px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+  padding: 0 54px 0 8px;
+  transition: width 0.42s cubic-bezier(0.2, 0.85, 0.2, 1), opacity 0.25s ease, transform 0.35s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+
+.search-shell.is-open .search-input-wrap {
+  width: min(340px, calc(100vw - 120px));
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+.search-input-wrap:focus-within {
+  box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.25);
+}
+
+.search-shell.mode-oblibene .search-input-wrap {
+  background: rgba(255, 251, 235, 0.97);
+  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.35);
+}
+
+.search-input-wrap input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 4px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 0.95rem;
+  color: #1f2937;
+  outline: none;
+  font-family: inherit;
+}
+
+.search-input-wrap input[readonly] {
+  cursor: default;
+  color: #92640a;
+  font-weight: 600;
+}
+
+/* Skrytí nativního "x" tlačítka pro mazání v input[type=search] (máme vlastní X na kolečku) */
+.search-input-wrap input[type="search"]::-webkit-search-cancel-button,
+.search-input-wrap input[type="search"]::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+.search-input-wrap input[type="search"] {
+  -moz-appearance: textfield;
+}
+
+/* Tlačítko pro přepnutí (rotaci) mezi vyhledáváním a oblíbenými — vždy hvězdička,
+   žlutě zvýrazněná když je právě aktivní režim oblíbených */
+.mode-switch-btn {
+  position: relative;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #eef2ff;
+  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mode-switch-btn:hover {
+  background: #e0e7ff;
+  transform: scale(1.08);
+}
+
+.search-shell.mode-oblibene .mode-switch-btn {
+  background: #ffe08a;
+  color: #d97706;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 24px;
+  color: #6c757d;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px dashed #ced4da;
+  border-radius: 10px;
+}
+
+.toggle-all {
+  display: block;               /* Změna z inline-block na block */
+  margin: 0 auto 40px auto;     /* Automatické centrování horizontálně */
+  padding: 14px 28px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(90deg, #0d6efd, #0b5ed7);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  transition: background 0.3s ease, transform 0.2s;
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+  position: relative;
+  text-align: center;
+}
+
+.toggle-all:hover {
+  background: linear-gradient(90deg, #0b5ed7, #0a58ca);
+  transform: scale(1.05);
+}
+
+
+
+/* Modal styl – glassmorphism */
+#modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+#modal.active {
+  display: flex;
+  animation: fadeIn 0.3s ease;
+}
+
+#modal-content {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 40px;
+  border-radius: 12px;
+  text-align: center;
+  position: relative;
+  max-width: 520px;
+  width: 90%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+#modal-close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+  color: #888;
+  transition: color 0.2s ease;
+}
+
+#modal-close:hover {
+  color: #111;
+}
+
+#modal-barcode svg {
+  width: 100%;
+  height: 160px;
+}
+
+#modal-label {
+  margin-top: 25px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #212529;
+}
+
+
+/*modal pro ukončení činosti */
+
+.end-btn {
+  display: block;           /* Změní z inline na blokový prvek */
+  margin: 30px auto;        /* Automatické zarovnání na střed + horní mezera */
+  padding: 10px 18px;
+  background: #dc3545;
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-size: 16px;
+}
+
+.end-btn:hover {
+  background: #c82333;
+}
+
+#modal-end {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+#modal-end.active {
+  display: flex;
+}
+
+#modal-content-end {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  height: 90vh; /* <-- Větší výška */
+  max-width: 1000px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+#modal-end-iframe-container {
+  flex-grow: 1; /* <-- Nechť zabere všechen zbylý prostor */
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+#modal-end-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+@media screen and (max-width: 768px) {
+  /* Skrytí iframe a tlačítka ukončení činnosti na telefonech */
+  #modal-iframe-container,
+  .end-btn {
+    display: none !important;
+  }
+
+  #modal-content {
+    padding: 20px;
+  }
+
+  #modal-label {
+    font-size: 18px;
+  }
+}
+
+
+/* ===== Okno činnosti + automatické přihlášení ===== */
+#modal-content {
+  --am-accent: #0d6efd;
+  --am-ink: #212529;
+  --am-muted: #5c636a;
+  --am-line: #dee2e6;
+  --am-soft: #f1f3f5;
+  --am-blue: #0d6efd;
+  --am-green: #2b8a3e;
+  --am-red: #c92a2a;
+  --am-orange: #e67700;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 720px;
+  width: calc(100% - 32px);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 0 28px 22px;
+  border-radius: 20px;
+  background: #fff;
+  text-align: left;
+  color: var(--am-ink);
+  box-shadow: 0 24px 60px rgba(33, 37, 41, 0.22);
+}
+.am-panel h2 { cursor: default; position: static; user-select: auto; text-align: left; transition: none; }
+.am-panel h2::before, .am-panel h2::after { content: none !important; display: none !important; }
+.am-hero-text h2 { text-align: center; }
+.am-wh.is-collapsed { gap: 0; }
+.am-strip { height: 6px; margin: 0 -28px; background: var(--am-accent); flex: 0 0 6px; }
+
+/* hlavička */
+.am-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.am-head-text { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.am-section { font-size: 12px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--am-accent); }
+.am-title-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+#modal-label.am-title { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -.5px; color: var(--am-ink); text-align: left; }
+.am-code {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 8px;
+  background: var(--am-soft); color: var(--am-ink); font: 600 14px ui-monospace, Consolas, monospace;
+}
+.am-code svg { color: var(--am-muted); }
+#modal-close.am-close {
+  position: static; flex: 0 0 44px; width: 44px; height: 44px; margin-top: 14px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 12px; border: 1px solid var(--am-line); background: #fff; color: var(--am-muted);
+  font-size: inherit; cursor: pointer; transition: background .15s, color .15s;
+}
+#modal-close.am-close:hover { background: var(--am-soft); color: var(--am-ink); }
+
+/* pohledy podle stavu */
+.am-view { display: none; flex-direction: column; gap: 14px; }
+.am-panel[data-state="checking"] .am-v-checking,
+.am-panel[data-state="waiting"] .am-v-waiting,
+.am-panel[data-state="running"] .am-v-process,
+.am-panel[data-state="ok"] .am-v-process,
+.am-panel[data-state="error"] .am-v-process,
+.am-panel[data-state="unconfirmed"] .am-v-process,
+.am-panel[data-state="manual"] .am-v-manual { display: flex; }
+
+.am-checking { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 28px; color: var(--am-muted); font-size: 15px; }
+
+/* čeká na kartu */
+.am-hero {
+  display: flex; flex-direction: column; align-items: center; gap: 22px;
+  padding: 30px 28px 28px; border-radius: 16px; background: #eef4ff; border: 1px solid #cfe2ff;
+}
+.am-cardart {
+  position: relative; width: 156px; height: 100px; border-radius: 14px; overflow: hidden;
+  background: linear-gradient(160deg, #ffffff, #e7efff); border: 2px solid var(--am-blue);
+  box-shadow: 0 10px 28px rgba(13, 110, 253, .22);
+}
+.am-chip { position: absolute; left: 16px; top: 18px; width: 30px; height: 22px; border-radius: 4px; background: #ffd43b; border: 1px solid #e0b100; }
+.am-line { position: absolute; left: 16px; height: 6px; border-radius: 3px; background: #c5d7f5; }
+.am-line1 { bottom: 30px; width: 96px; }
+.am-line2 { bottom: 16px; width: 60px; }
+.am-beam {
+  position: absolute; left: -10px; right: -10px; height: 3px; background: var(--am-blue);
+  box-shadow: 0 0 14px 4px rgba(13, 110, 253, .55); animation: amScan 1.8s ease-in-out infinite;
+}
+.am-hero-text { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.am-hero-text h2 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -.3px; color: var(--am-ink); }
+.am-hero-text p { margin: 0; font-size: 15px; color: var(--am-muted); }
+.am-slot { width: 100%; }
+
+/* pole na kartu */
+.am-input { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.am-input label { font-size: 13px; font-weight: 600; color: var(--am-muted); }
+.am-input-box {
+  display: flex; align-items: center; gap: 12px; height: 58px; padding: 0 16px; box-sizing: border-box;
+  border: 2px solid var(--am-blue); border-radius: 12px; background: #fff; color: var(--am-blue);
+  transition: box-shadow .15s, border-color .15s;
+}
+.am-input-box:focus-within { box-shadow: 0 0 0 5px rgba(13, 110, 253, .14); }
+.am-input-box input {
+  flex: 1 1 auto; min-width: 0; border: none; outline: none; background: transparent;
+  font: 600 20px 'Inter', sans-serif; letter-spacing: 1px; color: var(--am-ink);
+}
+.am-slot-compact .am-input-box { height: 50px; }
+.am-slot-compact .am-input-box input { font-size: 17px; }
+.am-focus-hint {
+  display: none; align-self: center; min-height: 36px; padding: 0 12px; border: none; background: transparent;
+  font: 600 13px 'Inter', sans-serif; color: #b8430a; cursor: pointer;
+}
+.am-panel.no-focus .am-focus-hint { display: block; }
+.am-panel.no-focus .am-input-box { border-style: dashed; border-color: #e8590c; color: #e8590c; }
+.am-panel[data-state="checking"] .am-input,
+.am-panel[data-state="running"] .am-input,
+.am-panel[data-state="unconfirmed"] .am-input,
+.am-panel[data-state="manual"] .am-input { display: none; }
+
+/* průběh */
+.am-box { display: flex; flex-direction: column; gap: 20px; padding: 24px; border-radius: 16px; background: #fff; border: 1px solid var(--am-line); }
+.am-panel[data-state="ok"] .am-box { background: #ebfbee; border-color: #b2f2bb; }
+.am-panel[data-state="error"] .am-box { background: #fff5f5; border-color: #ffc9c9; }
+.am-panel[data-state="unconfirmed"] .am-box { background: #fff4e6; border-color: #ffd8a8; }
+
+.am-steps { display: flex; align-items: flex-start; list-style: none; margin: 0; padding: 4px 2px; }
+.am-step { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 92px; flex: 0 0 92px; }
+.am-step-dot {
+  width: 34px; height: 34px; border-radius: 50%; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--am-line); background: #fff; color: #868e96; font-size: 13px; font-weight: 600;
+}
+.am-step-label { font-size: 12px; font-weight: 500; color: #6c757d; text-align: center; line-height: 1.3; }
+.am-step-line { flex: 1 1 0; height: 3px; margin-top: 16px; border-radius: 2px; background: var(--am-line); transition: background .3s; }
+.am-step-line.is-done { background: var(--am-blue); }
+.am-step.is-done .am-step-dot { background: var(--am-blue); border-color: var(--am-blue); color: #fff; }
+.am-step.is-done .am-step-label { color: var(--am-ink); }
+.am-step.is-active .am-step-dot { border: 3px solid #cfe2ff; border-top-color: var(--am-blue); animation: amSpin .9s linear infinite; }
+.am-step.is-active .am-step-dot span { display: none; }
+.am-step.is-active .am-step-label { color: var(--am-blue); font-weight: 600; }
+.am-step.is-failed .am-step-dot { background: var(--am-red); border-color: var(--am-red); color: #fff; }
+.am-step.is-failed .am-step-label { color: var(--am-red); font-weight: 600; }
+.am-step.is-unknown .am-step-dot { background: var(--am-orange); border-color: var(--am-orange); color: #fff; }
+.am-step.is-unknown .am-step-label { color: #a34f00; font-weight: 600; }
+
+.am-running { display: none; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 12px; background: #eef4ff; }
+.am-run-title { font-size: 17px; font-weight: 600; color: var(--am-ink); }
+.am-run-sub { font-size: 14px; color: var(--am-muted); margin-top: 3px; }
+.am-run-hint { display: none; font-size: 13px; color: var(--am-muted); text-align: center; }
+.am-panel[data-state="running"] .am-running { display: flex; }
+.am-panel[data-state="running"] .am-run-hint { display: block; }
+
+.am-spin {
+  width: 22px; height: 22px; flex: 0 0 22px; border-radius: 50%; box-sizing: border-box;
+  border: 3px solid #cfe2ff; border-top-color: var(--am-blue); animation: amSpin .9s linear infinite;
+}
+.am-spin-sm { width: 18px; height: 18px; flex-basis: 18px; }
+
+/* výsledek */
+.am-result, .am-detail, .am-quote { display: none; }
+.am-panel[data-state="ok"] .am-result,
+.am-panel[data-state="error"] .am-result,
+.am-panel[data-state="unconfirmed"] .am-result { display: flex; align-items: center; gap: 16px; }
+.am-result-icon {
+  width: 56px; height: 56px; flex: 0 0 56px; border-radius: 50%; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+}
+.am-panel[data-state="ok"] .am-result-icon { background: var(--am-green); box-shadow: 0 8px 22px rgba(43, 138, 62, .3); }
+.am-panel[data-state="error"] .am-result-icon { background: var(--am-red); }
+.am-panel[data-state="unconfirmed"] .am-result-icon { background: var(--am-orange); }
+.am-result-title { margin: 0; font-size: 23px; font-weight: 700; letter-spacing: -.2px; }
+.am-panel[data-state="ok"] .am-result-title { color: #1f6f31; }
+.am-panel[data-state="error"] .am-result-title { color: var(--am-red); }
+.am-panel[data-state="unconfirmed"] .am-result-title { color: #a34f00; }
+.am-result-sub { font-size: 14px; color: #495057; margin-top: 4px; }
+.am-detail { font-size: 14px; line-height: 1.5; color: #343a40; }
+.am-detail.has-text { display: block; }
+.am-quote.has-text { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; background: #fff; border: 1px solid var(--am-line); }
+.am-quote-label { font-size: 12px; font-weight: 600; color: var(--am-muted); padding-top: 2px; white-space: nowrap; }
+.am-quote-text { font-size: 14px; font-weight: 500; }
+.am-panel[data-state="ok"] .am-quote-text { color: #1f6f31; }
+.am-panel[data-state="error"] .am-quote-text { color: var(--am-red); }
+.am-panel[data-state="unconfirmed"] .am-quote-text { color: #a34f00; }
+
+/* další operátor / znovu */
+.am-next { display: none; flex-direction: column; gap: 10px; padding: 18px 20px; border-radius: 14px; background: #f8f9fa; border: 1px solid var(--am-line); }
+.am-panel[data-state="ok"] .am-next,
+.am-panel[data-state="error"] .am-next { display: flex; }
+.am-next-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--am-ink); }
+.am-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.am-center { justify-content: center; }
+.am-actions-error { display: none; padding-top: 4px; }
+.am-panel[data-state="error"] .am-actions-error { display: flex; }
+.am-actions-unconfirmed { display: none; }
+.am-panel[data-state="unconfirmed"] .am-actions-unconfirmed { display: flex; }
+
+.am-btn {
+  min-height: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid var(--am-blue);
+  background: var(--am-blue); color: #fff; font: 600 15px 'Inter', sans-serif;
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer; transition: filter .15s, background .15s;
+}
+.am-btn:hover { filter: brightness(.94); }
+.am-btn.ghost { background: #fff; color: var(--am-ink); border-color: #ced4da; }
+.am-btn.ghost:hover { background: var(--am-soft); filter: none; }
+
+/* ruční režim */
+.am-manual { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 14px; background: var(--am-soft); border: 1px solid var(--am-line); flex-wrap: wrap; }
+.am-manual-icon { width: 44px; height: 44px; flex: 0 0 44px; border-radius: 50%; background: #e9ecef; color: var(--am-muted); display: flex; align-items: center; justify-content: center; }
+.am-manual-text { flex: 1 1 220px; min-width: 0; }
+.am-manual-title { font-size: 17px; font-weight: 600; }
+.am-manual-sub { font-size: 14px; color: var(--am-muted); margin-top: 3px; }
+
+#modal-barcode { display: none; padding: 18px; border-radius: 14px; background: #fff; border: 1px solid var(--am-line); text-align: center; }
+#modal-content.show-barcode #modal-barcode { display: block; }
+#modal-barcode svg { width: 100%; height: 150px; }
+
+/* warehouse */
+.am-wh { display: flex; flex-direction: column; gap: 10px; padding: 12px 16px 16px; border-radius: 14px; background: var(--am-soft); }
+.am-wh-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.am-wh-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.am-muted { font-weight: 500; color: var(--am-muted); }
+.am-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--am-green); flex: 0 0 8px; }
+.am-wh-toggle {
+  min-height: 44px; padding: 0 10px; border: none; background: transparent; color: var(--am-blue);
+  font: 600 14px 'Inter', sans-serif; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+}
+.am-wh-toggle svg { transition: transform .2s; transform: rotate(180deg); }
+.am-wh.is-collapsed .am-wh-toggle svg { transform: none; }
+/* Sbaleno jen vizuálně – iframe se dál vykresluje, aby ho pomocník viděl */
+#modal-iframe-container.am-wh-body { height: 400px; margin: 0; overflow: hidden; border-radius: 10px; }
+.am-wh.animate #modal-iframe-container.am-wh-body { transition: height .25s ease; }
+.am-wh.is-collapsed #modal-iframe-container.am-wh-body { height: 0; }
+#modal-iframe { width: 100%; height: 400px; border: 1px solid var(--am-line); border-radius: 10px; box-sizing: border-box; background: #fff; display: block; }
+
+
+/* kód + warehouse */
+.am-code-card { display: none; flex-direction: column; align-items: center; gap: 12px; padding: 22px 18px 18px; border-radius: 16px; background: #fff; border: 2px solid var(--am-accent); box-shadow: 0 8px 24px color-mix(in srgb, var(--am-accent) 18%, transparent); }
+#modal-content.show-barcode .am-code-card { display: flex; }
+#modal-content.show-barcode #modal-barcode { display: block; padding: 0; border: none; }
+.am-code-card #modal-barcode svg { width: 100%; height: 150px; }
+.am-copy { min-height: 40px; font-size: 13px; }
+.am-wh-tools { display: flex; gap: 4px; align-items: center; }
+#am-wh-reload svg { transform: none; }
+
+/* běžný režim: okno přes celou výšku, kód vlevo (stejně vysoký jako warehouse), warehouse vpravo */
+#modal-content.is-basic { height: calc(100vh - 32px); overflow: hidden; padding-bottom: 20px; }
+#modal-content.is-basic .am-statusbar { display: none; }
+#modal-content.is-basic .am-main { flex: 1 1 auto; min-height: 0; }
+#modal-content.is-basic .am-code-card { justify-content: center; gap: 18px; padding: 28px 22px; }
+#modal-content.is-basic .am-code-card #modal-barcode svg { height: 190px; }
+#modal-content.is-basic .am-wh { min-height: 0; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
+#modal-content.is-basic .am-wh #modal-iframe-container.am-wh-body,
+#modal-content.is-basic .am-wh.is-collapsed #modal-iframe-container.am-wh-body { flex: 1 1 auto; height: auto !important; min-height: 0; }
+#modal-content.is-basic #modal-iframe { height: 100% !important; }
+/* běžný režim: kód vlevo, warehouse vpravo, warehouse pořád vidět */
+#modal-content.is-basic { max-width: 1240px; }
+#modal-content.is-basic .am-panel { display: none; }
+#modal-content.is-basic .am-main { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 20px; align-items: stretch; }
+#modal-content.is-basic #am-wh-toggle { display: none; }
+#modal-content.is-basic .am-wh { padding: 12px 14px 14px; }
+.am-main { display: flex; flex-direction: column; gap: 18px; }
+@media (max-width: 900px) {
+  #modal-content.is-basic .am-main { grid-template-columns: 1fr; }
+}
+
+/* běžné balení (basic) */
+#modal-content.is-basic [data-act="auto"],
+#modal-content.is-basic .am-statusbar { display: none; }
+
+/* stavový řádek */
+.am-statusbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--am-muted); flex-wrap: wrap; }
+.am-status { display: flex; align-items: center; gap: 8px; }
+.am-statusbar.is-off .am-dot { background: #adb5bd; }
+
+@keyframes amScan { 0% { top: 8%; } 50% { top: 88%; } 100% { top: 8%; } }
+@keyframes amSpin { to { transform: rotate(360deg); } }
+
+@media screen and (max-width: 768px) {
+  #modal-content { padding: 0 18px 18px; }
+  .am-strip { margin: 0 -18px; }
+  .am-panel, .am-wh, .am-statusbar { display: none !important; }
+  #modal-content #modal-barcode { display: block; }
+  #modal-content .am-code-card { display: flex; }
+  .am-steps { overflow-x: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .am-beam, .am-spin, .am-step.is-active .am-step-dot { animation-duration: 3s; }
+  .am-box.fx-glitch { animation: none !important; }
+}
+
+/* canvas efekty (as-fx.js) – bez nich zůstává CSS podoba */
+.am-fx-card { display: none; width: 300px; height: 160px; margin: -14px 0 -10px; }
+.am-fx-loader { display: none; flex: 0 0 auto; }
+.am-fx-loader.is-lg { width: 56px; height: 56px; margin: -10px 0; }
+.am-fx-loader.is-sm { width: 40px; height: 40px; margin: -10px -4px; }
+html.fx-on .am-cardart, html.fx-on .am-spin.fx-hide { display: none; }
+html.fx-on .am-fx-card, html.fx-on .am-fx-loader { display: block; }
+.am-steps-wrap { position: relative; }
+.am-fx-flow { position: absolute; left: 0; top: 0; width: 100%; height: 40px; pointer-events: none; }
+.am-box.fx-glitch { animation: amGlitch .5s steps(2, end); }
+@keyframes amGlitch {
+  0%   { transform: translate(0); box-shadow: none; }
+  15%  { transform: translate(-6px, 1px); box-shadow: 4px 0 0 rgba(224, 49, 49, .55), -4px 0 0 rgba(0, 180, 255, .35); }
+  30%  { transform: translate(5px, -1px); }
+  45%  { transform: translate(-3px, 0); box-shadow: -3px 0 0 rgba(224, 49, 49, .5); }
+  60%  { transform: translate(2px, 1px); }
+  100% { transform: translate(0); box-shadow: none; }
+}
+
+/* Oblíbené — hvězdička na kartě (výběr se přepíná rotačním tlačítkem u vyhledávání) */
+.cinnost.is-oblibena {
+  border-color: #fcd34d;
+}
+.cinnost.is-oblibena::before {
+  content: '⭐';
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 13px;
+  z-index: 2;
+  pointer-events: none;
+  line-height: 1;
+}
+.shift-hint { display: none; }
+
+/* Footer: compact, minimalist, centered */
+.site-footer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 0;
+  margin: 40px 0 20px 0;
+  font-size: 0.9em;
+  color: #495057;
+  background: transparent;
+}
+
+/* ikony vpravo nahoře (Správa, Nastavení) */
+.top-actions { position: fixed; top: 16px; right: 16px; z-index: 900; display: flex; gap: 8px; }
+.icon-link {
+  position: relative; width: 44px; height: 44px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255, 255, 255, .9); color: #495057; border: 1px solid #dee2e6;
+  box-shadow: 0 2px 8px rgba(33, 37, 41, .08); text-decoration: none;
+  transition: background .15s, color .15s, box-shadow .15s;
+}
+.icon-link:hover, .icon-link:focus-visible { background: #fff; color: #0d6efd; box-shadow: 0 4px 14px rgba(13, 110, 253, .18); }
+.icon-link:focus-visible { outline: 3px solid rgba(13, 110, 253, .35); outline-offset: 2px; }
+.icon-link svg { width: 20px; height: 20px; }
+.icon-link::after {
+  content: attr(data-tip); position: absolute; top: calc(100% + 8px); right: 0;
+  padding: 6px 10px; border-radius: 8px; background: #1f2937; color: #fff;
+  font-size: 12px; font-weight: 600; white-space: nowrap; pointer-events: none;
+  opacity: 0; transform: translateY(-4px); transition: opacity .15s, transform .15s;
+}
+.icon-link:hover::after, .icon-link:focus-visible::after { opacity: 1; transform: translateY(0); }
+.site-footer .admin-link {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px;
+  border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600;
+}
+.site-footer .admin-link:hover { background: rgba(0, 0, 0, .05); }
+.site-footer .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #212529;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.site-footer a {
+  color: #0d6efd;
+  text-decoration: none;
+}
+
+.site-footer a:hover { text-decoration: underline; }
+
+.site-footer .icon { width: 18px; height: 18px; display: inline-block; vertical-align: middle; opacity: .95; }
+
+.site-footer small { color: #6c757d; }
+
+@media (max-width: 480px) {
+  .site-footer { padding: 12px 10px; font-size: 0.85em; flex-direction: column; gap: 6px; }
+}
+
+</style>
+</head>
+<body>
+
+<h1>Activity sheet</h1>
+<h6 style="display: flex; align-items: center; gap: 8px; justify-content: center;">
+  By Cory for
+  <img src="/static/assets/logo.png" alt="Mailstep" id="brand-logo" style="height: 20px; width: auto;">
+  <span id="brand-text" hidden style="font-weight: 700; letter-spacing: .02em;">Mailstep</span>
+</h6>
+
+
+<button class="toggle-all" id="toggleAllBtn">Rozbalit všechny sekce</button>
+
+<button id="open-end-modal" class="end-btn">Ukončit činnost</button>
+
+<div class="search-panel">
+  <div class="search-shell" id="search-shell">
+    <button class="search-toggle" id="search-toggle" type="button" aria-expanded="false" aria-controls="search-input">
+      <span class="search-toggle-icon search-icon">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+          <path d="M10.5 3a7.5 7.5 0 015.95 12.03l4.13 4.12a1 1 0 01-1.42 1.42l-4.12-4.13A7.5 7.5 0 1110.5 3zm0 2a5.5 5.5 0 100 11 5.5 5.5 0 000-11z" />
+        </svg>
+      </span>
+      <span class="search-toggle-icon star-icon">⭐</span>
+      <span class="search-toggle-icon close-icon">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+          <path d="M18.3 5.71a1 1 0 00-1.41 0L12 10.59 7.11 5.7A1 1 0 105.7 7.11L10.59 12l-4.88 4.88a1 1 0 101.41 1.41L12 13.41l4.88 4.88a1 1 0 001.41-1.41L13.41 12l4.88-4.88a1 1 0 000-1.41z" />
+        </svg>
+      </span>
+    </button>
+    <div class="search-input-wrap">
+      <button class="mode-switch-btn" id="mode-switch-btn" type="button" title="Přepnout mezi hledáním a oblíbenými" aria-label="Přepnout mezi hledáním a oblíbenými">⭐</button>
+      <input id="search-input" type="search" placeholder="Hledat zakázku..." autocomplete="off">
+    </div>
+  </div>
+</div>
+
+<nav class="top-actions" aria-label="Program">
+  <a class="icon-link" href="/admin" aria-label="Správa činností" data-tip="Správa činností">
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+  </a>
+  <a class="icon-link" href="/nastaveni" aria-label="Nastavení" data-tip="Nastavení">
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+  </a>
+</nav>
+<div id="data-toast-container" class="toast-container" aria-live="polite"></div>
+
+<div id="cinnosti-container"></div>
+
+<!-- Modal -->
+<div id="modal">
+  <div id="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-label">
+    <div class="am-strip" id="am-strip"></div>
+
+    <header class="am-head">
+      <div class="am-head-text">
+        <span class="am-section" id="am-section"></span>
+        <div class="am-title-row">
+          <h1 id="modal-label" class="am-title"></h1>
+          <span class="am-code">
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6v12M7 6v12M10 6v12M14 6v12M17 6v12M20 6v12"/></svg>
+            <span id="am-code"></span>
+          </span>
+        </div>
+      </div>
+      <button type="button" id="modal-close" class="am-close" aria-label="Zavřít">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </header>
+
+    <!-- Automatické přihlášení -->
+    <div id="auto-panel" class="am-panel" data-state="checking">
+
+      <!-- kontrola pomocníka -->
+      <div class="am-view am-v-checking">
+        <div class="am-checking"><span class="am-spin am-spin-sm fx-hide"></span><canvas class="am-fx-loader is-sm" width="40" height="40" aria-hidden="true"></canvas>Připravuji automatické přihlášení…</div>
+      </div>
+
+      <!-- čeká na kartu -->
+      <div class="am-view am-v-waiting">
+        <div class="am-hero">
+          <div class="am-cardart" aria-hidden="true">
+            <span class="am-chip"></span><span class="am-line am-line1"></span><span class="am-line am-line2"></span>
+            <span class="am-beam"></span>
+          </div>
+          <canvas class="am-fx-card" id="am-fx-card" width="300" height="160" aria-hidden="true"></canvas>
+          <div class="am-hero-text">
+            <h2>Pípněte kartu operátora</h2>
+            <p>Čtečka kartu zapíše sama, nic dalšího není potřeba.</p>
+          </div>
+          <div class="am-slot" id="am-slot-main"></div>
+        </div>
+        <div class="am-actions am-center">
+          <button type="button" class="am-btn ghost" data-act="manual">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12"/><path d="M11 11V4.5a1.5 1.5 0 0 1 3 0V12"/><path d="M14 11V6.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-.5a6 6 0 0 1-4.6-2.2L4 15.5a1.6 1.6 0 0 1 2.3-2.2L8 15"/></svg>
+            Ruční přihlášení
+          </button>
+        </div>
+      </div>
+
+      <!-- průběh + výsledek -->
+      <div class="am-view am-v-process">
+        <div class="am-box">
+          <div class="am-steps-wrap">
+            <ol class="am-steps" id="am-steps" aria-label="Průběh přihlášení"></ol>
+            <canvas class="am-fx-flow" id="am-fx-flow" width="600" height="40" aria-hidden="true"></canvas>
+          </div>
+
+          <div class="am-running">
+            <span class="am-spin fx-hide"></span><canvas class="am-fx-loader is-lg" width="56" height="56" aria-hidden="true"></canvas>
+            <div>
+              <div class="am-run-title" id="am-run-title">Připravuji warehouse</div>
+              <div class="am-run-sub" id="am-run-sub"></div>
+            </div>
+          </div>
+          <div class="am-run-hint" id="am-run-hint"></div>
+
+          <div class="am-result">
+            <div class="am-result-icon" id="am-result-icon" aria-hidden="true"></div>
+            <div>
+              <h2 class="am-result-title" id="am-result-title"></h2>
+              <div class="am-result-sub" id="am-result-sub"></div>
+            </div>
+          </div>
+          <div class="am-detail" id="am-detail"></div>
+          <div class="am-quote" id="am-quote">
+            <span class="am-quote-label">Warehouse:</span>
+            <span class="am-quote-text" id="am-quote-text"></span>
+          </div>
+        </div>
+
+        <div class="am-next" id="am-next">
+          <div class="am-next-title" id="am-next-title"></div>
+          <div class="am-slot" id="am-slot-next"></div>
+          <div class="am-actions am-actions-error">
+            <button type="button" class="am-btn ghost" data-act="manual">Ruční přihlášení</button>
+          </div>
+        </div>
+
+        <div class="am-actions am-actions-unconfirmed">
+          <button type="button" class="am-btn" data-act="continue">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+            Aktivita vznikla, pokračovat
+          </button>
+          <button type="button" class="am-btn ghost" data-act="retry">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>
+            Nevznikla, zkusit znovu
+          </button>
+          <button type="button" class="am-btn ghost" data-act="manual">Ruční přihlášení</button>
+        </div>
+      </div>
+
+      <!-- ruční režim -->
+      <div class="am-view am-v-manual">
+        <div class="am-manual">
+          <div class="am-manual-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12"/><path d="M11 11V4.5a1.5 1.5 0 0 1 3 0V12"/><path d="M14 11V6.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-.5a6 6 0 0 1-4.6-2.2L4 15.5a1.6 1.6 0 0 1 2.3-2.2L8 15"/></svg>
+          </div>
+          <div class="am-manual-text">
+            <div class="am-manual-title">Ruční přihlášení</div>
+            <div class="am-manual-sub" id="am-manual-sub">Načti kód práce do warehouse níže.</div>
+          </div>
+          <button type="button" class="am-btn ghost" data-act="auto">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>
+            Zkusit automaticky
+          </button>
+        </div>
+      </div>
+
+      <!-- jediné pole na kartu – JS ho přesouvá do správného místa -->
+      <div class="am-input" id="am-input">
+        <label for="auto-card" id="am-input-label">Karta operátora</label>
+        <div class="am-input-box">
+          <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/></svg>
+          <input id="auto-card" type="text" autocomplete="off" spellcheck="false" placeholder="Čekám na kartu…">
+        </div>
+        <button type="button" class="am-focus-hint" id="am-focus-hint">Klikni sem, aby šla karta načíst</button>
+      </div>
+    </div>
+
+    <div class="am-main">
+    <div class="am-code-card" id="am-code-card">
+      <div id="modal-barcode"></div>
+      <button type="button" class="am-btn ghost am-copy" id="am-copy">Kopírovat kód</button>
+    </div>
+
+    <section class="am-wh" id="am-wh">
+      <div class="am-wh-head">
+        <div class="am-wh-title"><span class="am-dot"></span>Warehouse</div>
+        <div class="am-wh-tools">
+        <button type="button" class="am-wh-toggle" id="am-wh-reload">
+          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>
+          Načíst znovu
+        </button>
+        <button type="button" class="am-wh-toggle" id="am-wh-toggle" aria-expanded="true" aria-controls="modal-iframe-container">
+          <span id="am-wh-toggle-text">Skrýt</span>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        </div>
+      </div>
+      <div id="modal-iframe-container" class="am-wh-body">
+        <iframe id="modal-iframe"
+                title="Warehouse"
+                src="about:blank"
+                allow="camera *; microphone *">
+        </iframe>
+      </div>
+    </section>
+    </div>
+
+    <footer class="am-statusbar">
+      <div class="am-status"><span class="am-dot" id="am-status-dot"></span><span id="am-status-text">Kontroluji pomocníka…</span></div>
+      <div id="am-status-meta"></div>
+    </footer>
+  </div>
+</div>
+
+<!-- Modal pro ukončení činnosti -->
+<div id="modal-end">
+  <div id="modal-content-end">
+    <div id="modal-end-close">&times;</div>
+    <div id="modal-end-iframe-container" style="margin-top: 20px; height: 500px;">
+      <iframe id="modal-end-iframe"
+              src="{{WAREHOUSE_URL}}"
+              width="100%"
+              height="100%"
+              style="border: 1px solid #ccc; border-radius: 8px;"
+              allow="camera *; microphone *">
+      </iframe>
+    </div>
+  </div>
+</div>
+<footer class="site-footer" role="contentinfo" aria-label="Footer">
+  <a class="brand" href="https://github.com/FluffyCory" target="_blank" rel="noopener noreferrer" aria-label="GitHub - FluffyCory">
+    <!-- GitHub mark (clickable) -->
+    <svg class="icon" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.58.82-2.14-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 012-.27c.68 0 1.36.09 2 .27 1.53-1.03 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.14 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.15.46.55.38A8 8 0 0016 8c0-4.42-3.58-8-8-8z"/>
+    </svg>
+  </a>
+  <small>© 2025-2026 Cory</small>
+</footer>
+
+<script>
+  // --- Oblíbené (localStorage) ---
+  let vsechnycinnosti = []; // cache všech načtených činností
+  let vsechnySekce = [];
+  let sectionColorMap = new Map();
+  let cinnostSekceMap = new Map(); // id činnosti -> { sekce, barva } (pro zobrazení oblíbených)
+  let lastDataVersion = null;
+  let uiMode = 'search'; // 'search' | 'oblibene' — rotační menu vyhledávání/oblíbené
+  const sectionColors = [
+    '#0d6efd',
+    '#009688',
+    '#f76707',
+    '#8c42ff',
+    '#0ca678',
+    '#e64980',
+    '#2b8a3e',
+    '#d9480f'
+  ];
+
+  function getSectionColor(index) {
+    return sectionColors[index % sectionColors.length];
+  }
+
+  function normalizeText(value = '') {
+    return String(value)
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  }
+
+  function matchesQuery(cinnost, sekce, query) {
+    if (!query) return true;
+    const haystack = `${cinnost.nazev} ${cinnost.id} ${sekce.nazev}`;
+    const normalizedHaystack = normalizeText(haystack);
+    const tokens = normalizedHaystack.split(/[^a-z0-9]+/).filter(Boolean);
+    return tokens.some(token => token.startsWith(query));
+  }
+
+  function getOblibene() {
+    try { return JSON.parse(localStorage.getItem('oblibene') || '[]'); } catch { return []; }
+  }
+  function setOblibene(arr) {
+    localStorage.setItem('oblibene', JSON.stringify(arr));
+  }
+  function jeOblibena(id) {
+    return getOblibene().includes(id);
+  }
+
+  // Vrátí oblíbené činnosti obohacené o název/barvu jejich původní sekce
+  // (stejně jako to dělá vyhledávání pro svou virtuální sekci "Výsledky hledání").
+  function ziskatOblibeneCinnosti() {
+    const obl = getOblibene();
+    return obl
+      .map(id => {
+        const cinnost = vsechnycinnosti.find(c => c.id === id);
+        if (!cinnost) return null;
+        const meta = cinnostSekceMap.get(id);
+        return {
+          ...cinnost,
+          sekce: meta ? meta.sekce : '',
+          sekceBarva: meta ? meta.barva : getSectionColor(0)
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function toggleOblibena(id) {
+    let obl = getOblibene();
+    if (obl.includes(id)) {
+      obl = obl.filter(x => x !== id);
+    } else {
+      obl.push(id);
+    }
+    setOblibene(obl);
+
+    if (uiMode === 'oblibene') {
+      // Karta se mohla objevit/zmizet — přerenderuj celou sekci oblíbených
+      renderCinnosti(document.getElementById('search-input').value);
+    } else {
+      aktualizovatOblibeneOznaceni();
+      document.querySelectorAll('.cinnost').forEach(el => {
+        if (el.dataset.id === id) {
+          el.classList.toggle('is-oblibena', obl.includes(id));
+        }
+      });
+    }
+  }
+
+  // V režimu oblíbených input nic nepíše (číslo už je v nadpisu sekce dole),
+  // takže tu jen ponecháváme prázdné pole - funkce zůstává pro budoucí použití.
+  function aktualizovatOblibeneOznaceni() {
+    // záměrně beze změny placeholderu
+  }
+
+  // ---------- oznámení o změně seznamu ----------
+  // Program ví, proč se seznam změnil (server, novinky, Správa, přepnutí zdroje):
+  // seznam se obnoví sám a toast jen řekne, co se stalo.
+  const CHANGE_TEXT = {
+    server:      ['Seznam aktualizován', 'Správce upravil seznam činností na serveru.'],
+    server_edit: ['Uloženo na server', 'Změny ze Správy jsou vidět tady i u ostatních.'],
+    local_edit:  ['Vlastní seznam uložen', 'Změny ze Správy se projevily.'],
+    merge:       ['Novinky přidány', 'Do vlastního seznamu přibyly nové činnosti ze serveru.'],
+    source:      ['Zdroj seznamu změněn', '']
+  };
+  let pendingReload = false;
+  let lastSeenVersion = null;
+  let shownUpdates = 0;
+  let hideUpdatesToast = null;
+
+  function showToast(title, message, { kind = 'info', actions = [], sticky = false } = {}) {
+    const container = document.getElementById('data-toast-container');
+    const toast = document.createElement('div');
+    toast.className = `toast ${kind}`;
+    toast.setAttribute('role', 'status');
+    const t = document.createElement('div'); t.className = 'toast-title'; t.textContent = title;
+    const m = document.createElement('div'); m.className = 'toast-message'; m.textContent = message;
+    const close = document.createElement('button');
+    close.type = 'button'; close.className = 'toast-close'; close.setAttribute('aria-label', 'Zavřít');
+    close.innerHTML = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+    toast.append(close, t);
+    if (message) toast.appendChild(m);
+    if (actions.length) {
+      const row = document.createElement('div'); row.className = 'toast-actions';
+      actions.forEach(([label, fn, secondary]) => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'toast-btn' + (secondary ? ' toast-btn-secondary' : '');
+        b.textContent = label;
+        b.addEventListener('click', () => { fn(); hide(); });
+        row.appendChild(b);
+      });
+      toast.appendChild(row);
+    }
+    const hide = () => {
+      toast.classList.remove('visible');
+      setTimeout(() => toast.remove(), 250);
+    };
+    close.addEventListener('click', hide);
+    container.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('visible'));
+    if (!sticky) setTimeout(hide, 5000);
+    return hide;
+  }
+
+  function modalOpen() {
+    return document.getElementById('modal').classList.contains('active')
+      || document.getElementById('modal-end').classList.contains('active');
+  }
+
+  async function applyChange(ver) {
+    await loadCinnosti(true);
+    const ch = (ver && ver.change) || {};
+    if (ch.reason === 'startup') return;     // první stažení po spuštění programu – potichu
+    const [title, msg] = CHANGE_TEXT[ch.reason] || ['Seznam aktualizován', 'Seznam činností byl obnoven.'];
+    const text = ch.reason === 'source'
+      ? (ver.source === 'local' ? 'Zobrazuje se tvůj vlastní seznam.' : 'Zobrazuje se seznam ze serveru.')
+      : msg;
+    showToast(title, text, { kind: 'success' });
+  }
+
+  async function checkForChanges() {
+    const ver = await fetchDataVersion();
+    if (!ver) return;
+    if (lastDataVersion && ver.mtime_ns !== lastDataVersion.mtime_ns) {
+      if (modalOpen()) {
+        if (!pendingReload) lastSeenVersion = lastDataVersion;
+        pendingReload = true;           // nepřekreslovat pod rukama – až po zavření okna
+      } else {
+        pendingReload = false;
+        await applyChange(ver);
+      }
+    }
+    // vlastní seznam: na serveru jsou novinky
+    const n = ver.local_updates || 0;
+    if (!n && hideUpdatesToast) { hideUpdatesToast(); hideUpdatesToast = null; }
+    if (n > shownUpdates) {
+      if (hideUpdatesToast) hideUpdatesToast();
+      hideUpdatesToast = showToast('Na serveru jsou novinky', `${n} ${n === 1 ? 'nová činnost' : n < 5 ? 'nové činnosti' : 'nových činností'} – přidají se, jen když chceš. Tvoje úpravy zůstanou.`, {
+        kind: 'info', sticky: true,
+        actions: [['Otevřít Správu', () => { location.href = '/admin'; }], ['Později', () => {}, true]]
+      });
+    }
+    shownUpdates = n;
+  }
+
+  // po zavření okna činnosti doplnit odloženou změnu; toasty schovat, dokud je okno otevřené
+  const modalObserver = new MutationObserver(() => {
+    document.body.classList.toggle('modal-open', modalOpen());
+    if (pendingReload && !modalOpen()) { pendingReload = false; lastDataVersion = lastSeenVersion; checkForChanges(); }
+  });
+  ['modal', 'modal-end'].forEach(id => modalObserver.observe(document.getElementById(id), { attributes: true, attributeFilter: ['class'] }));
+
+  async function fetchDataVersion() {
+    try {
+      const response = await fetch('/api/cinnosti/meta');
+      if (!response.ok) return null;
+      return await response.json();
+    } catch (error) {
+      return null;
+    }
+  }
+
+  // Vytvoří kartu jedné činnosti. Pokud jsou zadané sekceNazev/sekceBarva,
+  // přidá se i barevný štítek se jménem původní sekce (jako u výsledků hledání a oblíbených).
+  function vytvorKartuCinnosti(cinnost, opts = {}) {
+    const div = document.createElement('div');
+    div.className = 'cinnost';
+    div.dataset.id = cinnost.id;
+    if (jeOblibena(cinnost.id)) div.classList.add('is-oblibena');
+
+    const label = document.createElement('div');
+    label.textContent = `${cinnost.nazev} (ID: ${cinnost.id})`;
+    div.appendChild(label);
+
+    if (opts.sekceNazev) {
+      const badge = document.createElement('div');
+      badge.className = 'section-badge';
+      badge.textContent = opts.sekceNazev;
+      badge.style.backgroundColor = opts.sekceBarva || getSectionColor(0);
+      div.appendChild(badge);
+    }
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.id = `barcode-${cinnost.id.replace(/[^a-zA-Z0-9]/g, '')}`;
+    div.appendChild(svg);
+
+    JsBarcode(svg, cinnost.id, {
+      format: "code128",
+      width: 2,
+      height: 50,
+      displayValue: false
+    });
+
+    div.addEventListener('click', (e) => {
+      if (e.shiftKey) {
+        toggleOblibena(cinnost.id);
+      } else {
+        openModal(cinnost);
+      }
+    });
+
+    return div;
+  }
+
+  function nastavToggleAllBtn() {
+    const toggleAllBtn = document.getElementById('toggleAllBtn');
+    toggleAllBtn.onclick = () => {
+      const vsechnyObsahy = document.querySelectorAll('.content');
+      const necoNeniAktivni = Array.from(vsechnyObsahy).some(div => !div.classList.contains('active'));
+      vsechnyObsahy.forEach(div => {
+        div.classList.toggle('active', necoNeniAktivni);
+      });
+      toggleAllBtn.textContent = necoNeniAktivni ? 'Sbalit všechny sekce' : 'Rozbalit všechny sekce';
+    };
+  }
+
+  function renderCinnosti(query = '') {
+    const container = document.getElementById('cinnosti-container');
+    container.innerHTML = '';
+
+    // Režim "oblíbené" — funguje stejně jako hledání: vytvoří si vlastní
+    // virtuální sekci, jen místo textového dotazu filtruje podle uloženého výběru.
+    if (uiMode === 'oblibene') {
+      const oblibeneList = ziskatOblibeneCinnosti();
+
+      if (oblibeneList.length === 0) {
+        container.innerHTML = '<div class="empty-state">Zatím žádné oblíbené. Shift + klik na činnost ji přidá.</div>';
+      } else {
+        const sekceDiv = document.createElement('section');
+        const nadpis = document.createElement('h2');
+        nadpis.textContent = `Oblíbené (${oblibeneList.length})`;
+        nadpis.classList.add('oblibene-heading');
+        nadpis.style.setProperty('--section-color', '#f59e0b');
+        sekceDiv.appendChild(nadpis);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'content active';
+
+        oblibeneList.forEach(cinnost => {
+          contentDiv.appendChild(vytvorKartuCinnosti(cinnost, { sekceNazev: cinnost.sekce, sekceBarva: cinnost.sekceBarva }));
+        });
+
+        sekceDiv.appendChild(contentDiv);
+        container.appendChild(sekceDiv);
+      }
+
+      aktualizovatOblibeneOznaceni();
+      nastavToggleAllBtn();
+      return;
+    }
+
+    const normalizedQuery = normalizeText(query).trim();
+
+    if (!normalizedQuery) {
+      const filteredSections = vsechnySekce
+        .map(sekce => ({
+          ...sekce,
+          cinnosti: sekce.cinnosti.filter(cinnost => matchesQuery(cinnost, sekce, normalizedQuery))
+        }))
+        .filter(sekce => sekce.cinnosti.length > 0);
+
+      if (filteredSections.length === 0) {
+        container.innerHTML = '<div class="empty-state">Žádná činnost neodpovídá hledání.</div>';
+      } else {
+        filteredSections.forEach((sekce, index) => {
+          const sekceDiv = document.createElement('section');
+
+          const nadpis = document.createElement('h2');
+          nadpis.textContent = `${sekce.nazev} (${sekce.cinnosti.length})`;
+          nadpis.style.setProperty('--section-color', getSectionColor(index));
+          sekceDiv.appendChild(nadpis);
+
+          const contentDiv = document.createElement('div');
+          contentDiv.className = 'content';
+
+          sekce.cinnosti.forEach(cinnost => {
+            contentDiv.appendChild(vytvorKartuCinnosti(cinnost));
+          });
+
+          sekceDiv.appendChild(contentDiv);
+          container.appendChild(sekceDiv);
+
+          nadpis.addEventListener('click', () => {
+            contentDiv.classList.toggle('active');
+          });
+        });
+      }
+    } else {
+      const matchingActivities = vsechnySekce.flatMap(sekce =>
+        sekce.cinnosti
+          .filter(cinnost => matchesQuery(cinnost, sekce, normalizedQuery))
+          .map(cinnost => ({
+            ...cinnost,
+            sekce: sekce.nazev,
+            sekceBarva: sectionColorMap.get(sekce.nazev) || getSectionColor(0)
+          }))
+      );
+
+      if (matchingActivities.length === 0) {
+        container.innerHTML = '<div class="empty-state">Žádná činnost neodpovídá hledání.</div>';
+      } else {
+        const sekceDiv = document.createElement('section');
+        const nadpis = document.createElement('h2');
+        nadpis.textContent = `Výsledky hledání (${matchingActivities.length})`;
+        nadpis.classList.add('search-results-heading');
+        sekceDiv.appendChild(nadpis);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'content active';
+
+        matchingActivities.forEach(cinnost => {
+          contentDiv.appendChild(vytvorKartuCinnosti(cinnost, { sekceNazev: cinnost.sekce, sekceBarva: cinnost.sekceBarva }));
+        });
+
+        sekceDiv.appendChild(contentDiv);
+        container.appendChild(sekceDiv);
+      }
+    }
+
+    aktualizovatOblibeneOznaceni();
+    nastavToggleAllBtn();
+  }
+
+  async function loadCinnosti(force = false) {
+    const response = await fetch('/api/cinnosti');
+    const data = await response.json();
+    const payload = data && data.sekce ? data : { sekce: data };
+
+    // Uložení do cache
+    vsechnycinnosti = payload.sekce.flatMap(s => s.cinnosti);
+    vsechnySekce = payload.sekce;
+    sectionColorMap = new Map();
+    cinnostSekceMap = new Map();
+    vsechnySekce.forEach((sekce, index) => {
+      const barva = getSectionColor(index);
+      sectionColorMap.set(sekce.nazev, barva);
+      sekce.cinnosti.forEach(c => cinnostSekceMap.set(c.id, { sekce: sekce.nazev, barva }));
+    });
+
+    const currentVersion = await fetchDataVersion();
+    if (currentVersion) {
+      lastDataVersion = currentVersion;
+      if (!force) shownUpdates = currentVersion.local_updates || 0;
+    }
+
+    const currentQuery = document.getElementById('search-input').value;
+    renderCinnosti(currentQuery);
+  }
+
+  // Funkce na otevření okna činnosti
+  function openModal(cinnost) {
+    const modal = document.getElementById('modal');
+    const meta = cinnostSekceMap.get(cinnost.id) || {};
+    const accent = meta.barva || '#0d6efd';
+
+    document.getElementById('modal-content').style.setProperty('--am-accent', accent);
+    document.getElementById('am-section').textContent = meta.sekce || '';
+    document.getElementById('modal-label').textContent = cinnost.nazev;
+    document.getElementById('am-code').textContent = cinnost.id;
+
+    const modalBarcode = document.getElementById('modal-barcode');
+    modalBarcode.innerHTML = '';
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.id = 'modal-barcode-svg';
+    modalBarcode.appendChild(svg);
+    JsBarcode(svg, cinnost.id, { format: "code128", width: 3, height: 110, displayValue: true, fontSize: 20, margin: 4 });
+
+    modal.classList.add('active');
+    autoStart(cinnost);
+  }
+
+  // ================= Automatické přihlášení =================
+  // Pomocník je součástí programu ActivitySheet: přes UI Automation vyplní kartu
+  // a kód práce do warehouse v okně níže, zmáčkne Confirm a vrátí výsledek
+  // ok / error / unconfirmed. Úspěch se nikdy nedomýšlí.
+  const BRIDGE_URL = '/api/bridge';
+  const WAREHOUSE_URL = '{{WAREHOUSE_URL}}'.replace(/&amp;/g, '&');   // z config.json (warehouse_url)
+  const STEP_LABELS = ['Karta', 'Warehouse', 'Ověření karty', 'Kód práce', 'Potvrzení'];
+  // krok pomocníka → index v ukazateli průběhu
+  const STEP_INDEX = {
+    'start': 1, 'fronta': 1, 'hledám warehouse': 1, 'otevírám formulář': 1,
+    'zadávám kartu': 2, 'ověřuji kartu': 2, 'zadávám kód práce': 3,
+    'potvrzuji (Confirm)': 4, 'čtu výsledek': 4, 'timeout': 4, '?': 4, 'hotovo': 4
+  };
+  const ICONS = {
+    check: '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+    x: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    alert: '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 7v6"/><path d="M12 17h.01"/></svg>',
+    stepCheck: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+    stepX: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    stepAlert: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M12 7v6"/><path d="M12 17h.01"/></svg>',
+    user: '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>'
+  };
+
+  const auto = {
+    cinnost: null,
+    state: 'idle',
+    inputMode: 'uia',
+    helperOk: false,
+    whOpen: null,          // ruční volba uživatele (null = podle stavu)
+    iframeReady: null,     // Promise, která se splní po načtení warehouse
+    pollTimer: null,
+    startedAt: 0,
+    content: document.getElementById('modal-content'),
+    panel: document.getElementById('auto-panel'),
+    input: document.getElementById('auto-card'),
+    inputWrap: document.getElementById('am-input'),
+    iframe: document.getElementById('modal-iframe'),
+    wh: document.getElementById('am-wh'),
+  };
+  const $ = (id) => document.getElementById(id);
+
+  function maskCard(card) {
+    return card.length > 4 ? '…' + card.slice(-4) : card;
+  }
+
+  // ---------- warehouse (iframe) ----------
+  function reloadWarehouse() {
+    auto.iframeReady = new Promise((resolve) => {
+      let done = false;
+      const finish = () => { if (!done) { done = true; setTimeout(resolve, 400); } };
+      auto.iframe.addEventListener('load', finish, { once: true });
+      setTimeout(finish, 15000);
+    });
+    auto.iframe.src = WAREHOUSE_URL;
+    return auto.iframeReady;
+  }
+
+  function setWarehouseOpen(open) {
+    auto.wh.classList.toggle('is-collapsed', !open);
+    $('am-wh-toggle').setAttribute('aria-expanded', String(open));
+    $('am-wh-toggle-text').textContent = open ? 'Skrýt' : 'Zobrazit';
+  }
+
+  function syncWarehouse() {
+    const def = !(auto.state === 'waiting' || auto.state === 'checking');
+    setWarehouseOpen(auto.whOpen === null ? def : auto.whOpen);
+  }
+
+  $('am-wh-reload').addEventListener('click', () => reloadWarehouse());
+  $('am-copy').addEventListener('click', async () => {
+    const code = auto.cinnost ? auto.cinnost.id : '';
+    try { await navigator.clipboard.writeText(code); } catch (e) {
+      const t = document.createElement('textarea'); t.value = code; document.body.appendChild(t); t.select();
+      document.execCommand('copy'); t.remove();
+    }
+    $('am-copy').textContent = 'Zkopírováno';
+    setTimeout(() => { $('am-copy').textContent = 'Kopírovat kód'; }, 1500);
+  });
+
+  $('am-wh-toggle').addEventListener('click', () => {
+    auto.wh.classList.add('animate');
+    setTimeout(() => auto.wh.classList.remove('animate'), 300);
+    auto.whOpen = auto.wh.classList.contains('is-collapsed');
+    syncWarehouse();
+  });
+
+  // ---------- canvas efekty (as-fx.js; při „omezit animace“ nic) ----------
+  const fx = { on: typeof FX !== 'undefined' && !FX.reduce };
+  function accentColor() {
+    return getComputedStyle(auto.content).getPropertyValue('--am-accent').trim() || '#0d6efd';
+  }
+  function centerOf(el) { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+  if (fx.on) {
+    document.documentElement.classList.add('fx-on');
+    document.querySelectorAll('.am-fx-loader').forEach((c) => FX.mount(c, 'loader', { color: '#0d6efd' }));
+    fx.card = FX.mount($('am-fx-card'), 'card', { accent: '#0d6efd' });
+    const flowCanvas = $('am-fx-flow');
+    FX.mount(flowCanvas, 'flow', {
+      color: '#0d6efd',
+      // proud dat teče z hotového kroku do právě probíhajícího
+      getSegment() {
+        if (auto.state !== 'running') return null;
+        const active = document.querySelector('#am-steps .am-step.is-active .am-step-dot');
+        if (!active) return null;
+        const base = flowCanvas.getBoundingClientRect();
+        const a = active.getBoundingClientRect();
+        const prev = active.closest('li').previousElementSibling;       // čára před krokem
+        const from = prev ? prev.getBoundingClientRect().left : a.left - 60;
+        return { x1: from - base.left, x2: a.left - base.left + 4, y: a.top + a.height / 2 - base.top };
+      }
+    });
+  }
+  // karta „odletí“ do warehouse (overlay přežije přepnutí pohledu)
+  function fxCardToWarehouse(fromEl) {
+    if (!fx.on) return;
+    if (fromEl === $('am-fx-card') && fx.card) fx.card.trigger();
+    FX.fly([fromEl.getBoundingClientRect()], auto.wh.getBoundingClientRect(), accentColor());
+  }
+  function fxSuccess() {
+    if (!fx.on) return;
+    requestAnimationFrame(() => { const c = centerOf($('am-result-icon')); FX.burst(c.x, c.y, accentColor()); });
+  }
+  function fxError() {
+    if (!fx.on) return;
+    const box = document.querySelector('.am-v-process .am-box');
+    box.classList.remove('fx-glitch'); void box.offsetWidth; box.classList.add('fx-glitch');
+    setTimeout(() => box.classList.remove('fx-glitch'), 600);
+  }
+
+  window.asBusy = () => auto.state === 'running' || auto.state === 'launching';
+
+  // ---------- stav pomocníka ----------
+  async function bridgeStatus() {
+    try {
+      const r = await fetch(`${BRIDGE_URL}/status`, { signal: AbortSignal.timeout(1500), cache: 'no-store' });
+      const j = await r.json();
+      auto.inputMode = j.input_mode || 'uia';
+      auto.mode = j.mode || 'auto';
+      $('am-status-meta').textContent = `Activity Sheet ${j.version || ''} · režim ${auto.inputMode === 'keyboard' ? 'klávesnice' : 'UIA'}`;
+      return j.ok ? { ok: true } : { ok: false, why: j.error || 'UI Automation nefunguje.' };
+    } catch (e) {
+      $('am-status-meta').textContent = '';
+      return { ok: false, why: 'Automatické přihlášení neodpovídá – je spuštěný program ActivitySheet?' };
+    }
+  }
+
+  function setStatusBar(ok, text) {
+    auto.helperOk = ok;
+    document.querySelector('.am-statusbar').classList.toggle('is-off', !ok);
+    $('am-status-text').textContent = text;
+  }
+
+  // ---------- ukazatel průběhu ----------
+  let lastStepsKey = '';
+  function renderSteps(states) {
+    const key = states.join(',');
+    if (key === lastStepsKey) return;               // beze změny → nepřekreslovat (animace běží dál)
+    lastStepsKey = key;
+    const ol = $('am-steps');
+    ol.innerHTML = '';
+    STEP_LABELS.forEach((label, i) => {
+      const st = states[i];
+      const li = document.createElement('li');
+      li.className = `am-step is-${st}`;
+      const dot = document.createElement('div');
+      dot.className = 'am-step-dot';
+      dot.setAttribute('aria-hidden', 'true');
+      dot.innerHTML = st === 'done' ? ICONS.stepCheck : st === 'failed' ? ICONS.stepX
+        : st === 'unknown' ? ICONS.stepAlert : `<span>${i + 1}</span>`;
+      const lab = document.createElement('div');
+      lab.className = 'am-step-label';
+      lab.textContent = label;
+      const sr = { done: 'hotovo', active: 'probíhá', failed: 'chyba', unknown: 'nepotvrzeno', pending: 'čeká' }[st];
+      li.setAttribute('aria-label', `${label}: ${sr}`);
+      li.append(dot, lab);
+      ol.appendChild(li);
+      if (i < STEP_LABELS.length - 1) {
+        const line = document.createElement('li');
+        line.className = 'am-step-line' + (st === 'done' ? ' is-done' : '');
+        line.setAttribute('aria-hidden', 'true');
+        ol.appendChild(line);
+      }
+    });
+  }
+
+  function stepsUpTo(idx, current) {
+    return STEP_LABELS.map((_, i) => (i < idx ? 'done' : i === idx ? current : 'pending'));
+  }
+
+  // ---------- přepínání stavů ----------
+  function placeInput(slotId, label, compact) {
+    const slot = $(slotId);
+    slot.appendChild(auto.inputWrap);
+    slot.classList.toggle('am-slot-compact', !!compact);
+    $('am-input-label').textContent = label;
+    auto.input.value = '';
+  }
+
+  function setState(state) {
+    if (!['running', 'ok', 'error', 'unconfirmed'].includes(state)) lastStepsKey = '';
+    auto.state = state;
+    auto.panel.dataset.state = state;
+    auto.content.classList.toggle('show-barcode', state === 'manual');
+    syncWarehouse();
+    if (state === 'waiting' || state === 'ok' || state === 'error') {
+      setTimeout(() => auto.input.focus({ preventScroll: true }), 60);
+    }
+  }
+
+  function setText(id, text) {
+    const el = $(id);
+    el.textContent = text || '';
+    el.classList.toggle('has-text', !!text);
+  }
+
+  function showBasic() {
+    auto.content.classList.add('is-basic');
+    setState('manual');
+    setWarehouseOpen(true);
+  }
+
+  async function autoStart(cinnost) {
+    auto.cinnost = cinnost;
+    auto.whOpen = null;
+    stopPolling();
+    reloadWarehouse();
+    // režim známe z načtení stránky → okno se hned otevře ve správném rozložení (bez přeskakování)
+    if (auto.mode === 'basic') {
+      showBasic();
+      bridgeStatus().then(() => {                    // kdyby se režim mezitím změnil v Nastavení
+        if (auto.cinnost === cinnost && auto.mode !== 'basic') autoStart(cinnost);
+      });
+      return;
+    }
+    auto.content.classList.remove('is-basic');
+    setState('checking');
+    const st = await bridgeStatus();
+    if (auto.cinnost !== cinnost) return;            // mezitím otevřena jiná činnost
+    if (auto.mode === 'basic') { showBasic(); return; }
+    if (!st.ok) {
+      setStatusBar(false, 'Pomocník neodpovídá');
+      document.querySelector('.am-manual-title').textContent = 'Ruční přihlášení';
+      $('am-manual-sub').textContent = `${st.why} Načti kód práce do warehouse níže.`;
+      setState('manual');
+      return;
+    }
+    setStatusBar(true, 'Pomocník připraven');
+    toWaiting();
+  }
+
+  function toWaiting() {
+    placeInput('am-slot-main', 'Karta operátora', false);
+    if (fx.card) { fx.card.set(accentColor()); fx.card.reset(); }
+    setState('waiting');
+  }
+
+  // ---------- běh ----------
+  function stopPolling() {
+    if (auto.pollTimer) clearInterval(auto.pollTimer);
+    auto.pollTimer = null;
+  }
+
+  function showRunning(idx, card) {
+    const c = auto.cinnost;
+    renderSteps(stepsUpTo(idx, 'active'));
+    const secs = ((Date.now() - auto.startedAt) / 1000).toFixed(1).replace('.', ',');
+    const titles = {
+      1: 'Připravuji warehouse',
+      2: `Ověřuji kartu ${maskCard(card)}`,
+      3: `Zadávám kód práce ${c.id}`,
+      4: 'Potvrzuji ve warehouse'
+    };
+    $('am-run-title').textContent = titles[idx] || 'Pracuji…';
+    $('am-run-sub').textContent = `${idx >= 3 ? 'Karta ' + maskCard(card) + ' přijata · ' : ''}${secs} s`;
+  }
+
+  async function autoRun(card) {
+    const cinnost = auto.cinnost;
+    auto.startedAt = Date.now();
+    $('am-run-hint').textContent = auto.inputMode === 'keyboard'
+      ? 'Teď asi 2 s neklikej a nepiš. Pohyb myší nevadí.'
+      : 'Okno na okamžik převezme fokus a hned tě vrátí zpět. Pohyb myší nevadí.';
+    setState('running');
+    setWarehouseOpen(true);
+    showRunning(1, card);
+
+    // warehouse musí být načtený (po reloadu) a rozbalený
+    await Promise.all([auto.iframeReady, new Promise((r) => setTimeout(r, 300))]);
+    if (auto.cinnost !== cinnost) return;
+
+    let lastIdx = 1;
+    auto.pollTimer = setInterval(async () => {
+      try {
+        const r = await fetch(`${BRIDGE_URL}/progress`, { cache: 'no-store' });
+        const p = await r.json();
+        if (auto.state !== 'running') return;
+        const idx = STEP_INDEX[p.step] || lastIdx;
+        lastIdx = Math.max(lastIdx, idx);
+        showRunning(lastIdx, card);
+      } catch (e) { /* další pokus za chvíli */ }
+    }, 250);
+
+    let res;
+    try {
+      const r = await fetch(`${BRIDGE_URL}/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ card, job: cinnost.id, label: cinnost.nazev }),
+        signal: AbortSignal.timeout(100000)
+      });
+      res = await r.json();
+    } catch (e) {
+      res = { result: 'unconfirmed', step: '?', message: 'Spojení s pomocníkem se přerušilo. Zkontroluj warehouse.' };
+    }
+    stopPolling();
+    if (auto.cinnost !== cinnost) return;
+    showResult(res, card);
+  }
+
+  function showResult(res, card) {
+    const c = auto.cinnost;
+    const secs = ((res.ms || (Date.now() - auto.startedAt)) / 1000).toFixed(1).replace('.', ',');
+    const toast = (res.texts || []).join(' · ');
+    const failIdx = STEP_INDEX[res.step] || 4;
+
+    if (res.result === 'ok') {
+      renderSteps(STEP_LABELS.map(() => 'done'));
+      $('am-result-icon').innerHTML = ICONS.check;
+      $('am-result-title').textContent = `Odesláno – ${c.nazev}`;
+      $('am-result-sub').textContent = `Karta ${maskCard(card)} · ${c.id} · za ${secs} s`;
+      setText('am-detail', 'Výsledek ukazuje warehouse níže.');
+      setText('am-quote-text', '');
+      $('am-quote').classList.remove('has-text');
+      $('am-next-title').innerHTML = `${ICONS.user}<span></span>`;
+      $('am-next-title').querySelector('span').textContent = 'Další operátor na stejnou práci může rovnou pípnout';
+      placeInput('am-slot-next', 'Karta dalšího operátora', true);
+      setState('ok');
+      fxSuccess();
+      return;
+    }
+
+    if (res.result === 'error') {
+      renderSteps(stepsUpTo(failIdx, 'failed'));
+      $('am-result-icon').innerHTML = ICONS.x;
+      const titles = {
+        1: res.busy ? 'Pomocník je zaneprázdněný' : 'Warehouse není připravený',
+        2: 'Karta nebyla přijata',
+        3: 'Kód práce nebyl přijat',
+        4: 'Potvrzení se nepovedlo'
+      };
+      $('am-result-title').textContent = titles[failIdx] || 'Nepovedlo se';
+      $('am-result-sub').textContent = `Karta ${maskCard(card)} · `
+        + (failIdx < 4 ? 'nic se nezaložilo' : 'zkontroluj warehouse');
+      const showQuote = toast && toast !== res.message;
+      setText('am-detail', showQuote || !toast ? res.message : '');
+      setText('am-quote-text', toast);
+      $('am-quote').classList.toggle('has-text', !!toast);
+      $('am-next-title').textContent = 'Pípni kartu znovu, nebo zkus jinou';
+      placeInput('am-slot-next', 'Karta operátora', true);
+      setState('error');
+      fxError();
+      return;
+    }
+
+    // unconfirmed – nic se nepřijme, dokud to člověk nezkontroluje
+    renderSteps(STEP_LABELS.map((_, i) => (i < failIdx ? 'done' : i === failIdx ? 'unknown' : 'pending')));
+    $('am-result-icon').innerHTML = ICONS.alert;
+    $('am-result-title').textContent = 'Nepotvrzeno – zkontroluj warehouse';
+    $('am-result-sub').textContent = `Karta ${maskCard(card)} · ${c.id}`;
+    setText('am-detail', `${res.message} Dokud to nepotvrdíš, další kartu nepřijmu.`);
+    setText('am-quote-text', toast);
+    $('am-quote').classList.toggle('has-text', !!toast);
+    setState('unconfirmed');
+    fxError();
+  }
+
+  // ---------- vstup z čtečky ----------
+  auto.input.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const card = auto.input.value.trim();
+    if (!card || !['waiting', 'ok', 'error'].includes(auto.state) || !auto.helperOk) return;
+    auto.input.value = '';
+    const wasWaiting = auto.state === 'waiting';
+    const launch = wasWaiting && fx.on;
+    if (launch) auto.state = 'launching';             // další Enter mezitím nic nespustí
+    auto.input.blur();
+    fxCardToWarehouse(wasWaiting ? $('am-fx-card') : auto.inputWrap);
+    if (!wasWaiting) reloadWarehouse();               // další operátor / nový pokus = čistý warehouse
+    if (launch) {                                      // nechat kartu chvíli odletět
+      const c0 = auto.cinnost;
+      setTimeout(() => { if (auto.cinnost === c0 && auto.state === 'launching') autoRun(card); }, 380);
+    } else autoRun(card);
+  });
+  auto.input.addEventListener('focus', () => auto.panel.classList.remove('no-focus'));
+  auto.input.addEventListener('blur', () => {
+    if (auto.state !== 'launching') auto.panel.classList.add('no-focus');
+  });
+  $('am-focus-hint').addEventListener('click', () => auto.input.focus());
+
+  // Klik kamkoli do okna (mimo warehouse, tlačítka a pole) vrátí fokus do pole na kartu
+  auto.content.addEventListener('click', (e) => {
+    if (['waiting', 'ok', 'error'].includes(auto.state) && !e.target.closest('button, input, iframe, a, section')) {
+      auto.input.focus();
+    }
+  });
+
+  // tlačítka akcí
+  auto.panel.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const act = btn.dataset.act;
+    if (act === 'manual') {
+      document.querySelector('.am-manual-title').textContent = 'Ruční přihlášení';
+      $('am-manual-sub').textContent = 'Načti kód práce do warehouse níže.';
+      setState('manual');
+      setWarehouseOpen(true);
+    } else if (act === 'continue' || act === 'retry') {
+      reloadWarehouse();
+      toWaiting();
+    } else if (act === 'auto' && auto.cinnost) {
+      autoStart(auto.cinnost);
+    }
+  });
+
+  async function closeActivityModal() {
+    if (auto.state === 'running') {
+      const ok = await asConfirm({
+        title: 'Zavřít během přihlašování?',
+        message: 'Pomocník právě přihlašuje ve warehouse. Když okno zavřeš, výsledek neuvidíš.',
+        confirmText: 'Přesto zavřít', cancelText: 'Nechat otevřené', tone: 'warning', icon: 'alert'
+      });
+      if (!ok) return;
+    }
+    stopPolling();
+    auto.cinnost = null;
+    auto.state = 'idle';
+    document.getElementById('modal').classList.remove('active');
+  }
+
+
+
+
+  // Zavření modalu
+  document.getElementById('modal-close').addEventListener('click', closeActivityModal);
+
+  // Okno činnosti se zavírá jen křížkem – klik vedle ani Esc ho nezavřou,
+  // aby výsledek přihlášení ve warehouse zůstal vidět, dokud ho člověk nezkontroluje.
+
+    const searchShell = document.getElementById('search-shell');
+  const searchToggle = document.getElementById('search-toggle');
+  const searchInput = document.getElementById('search-input');
+  const modeSwitchBtn = document.getElementById('mode-switch-btn');
+
+  const updateSearchToggle = () => {
+    const isOpen = searchShell.classList.contains('is-open');
+    const isFav = uiMode === 'oblibene';
+    searchToggle.setAttribute('aria-expanded', String(isOpen));
+    searchToggle.querySelector('.search-icon').style.display = (!isOpen && !isFav) ? 'inline-flex' : 'none';
+    searchToggle.querySelector('.star-icon').style.display = (!isOpen && isFav) ? 'inline-flex' : 'none';
+    searchToggle.querySelector('.close-icon').style.display = isOpen ? 'inline-flex' : 'none';
+  };
+
+  const openSearch = () => {
+    searchShell.classList.add('is-open');
+    updateSearchToggle();
+    if (uiMode === 'search') {
+      searchInput.focus();
+      searchInput.select();
+    }
+  };
+
+  const closeSearch = () => {
+    searchShell.classList.remove('is-open');
+    updateSearchToggle();
+  };
+
+  // Přepne rotační menu mezi režimem vyhledávání a oblíbených
+  // a vždy rovnou přerenderuje obsah (jako by šlo o změnu vyhledávacího dotazu).
+  const nastavRezim = (mode) => {
+    uiMode = mode;
+    const isFav = mode === 'oblibene';
+    searchShell.classList.toggle('mode-oblibene', isFav);
+    if (isFav) {
+      searchInput.value = '';
+      searchInput.readOnly = true;
+      searchInput.placeholder = '';
+      searchInput.blur();
+    } else {
+      searchInput.readOnly = false;
+      searchInput.placeholder = 'Hledat zakázku...';
+    }
+    updateSearchToggle();
+    renderCinnosti(searchInput.value);
+  };
+
+  searchToggle.addEventListener('click', (event) => {
+    event.stopPropagation();
+    if (searchShell.classList.contains('is-open')) {
+      if (uiMode === 'oblibene') {
+        nastavRezim('search');
+        closeSearch();
+      } else if (searchInput.value.trim()) {
+        searchInput.value = '';
+        renderCinnosti('');
+        updateSearchToggle();
+        searchInput.focus();
+      } else {
+        closeSearch();
+      }
+    } else {
+      openSearch();
+    }
+  });
+
+  searchInput.addEventListener('input', (event) => {
+    if (uiMode !== 'search') return;
+    renderCinnosti(event.target.value);
+    updateSearchToggle();
+  });
+
+  modeSwitchBtn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    if (!searchShell.classList.contains('is-open')) {
+      openSearch();
+    }
+    nastavRezim(uiMode === 'search' ? 'oblibene' : 'search');
+    if (uiMode === 'search') {
+      searchInput.focus();
+    }
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!searchShell.contains(event.target)) {
+      if (uiMode === 'search' && !searchInput.value.trim()) {
+        closeSearch();
+      }
+    }
+  });
+
+  updateSearchToggle();
+
+  document.getElementById('open-end-modal').addEventListener('click', () => {
+    document.getElementById('modal-end').classList.add('active');
+  });
+
+  // Zavřít modal kliknutím na křížek
+  document.getElementById('modal-end-close').addEventListener('click', () => {
+    document.getElementById('modal-end').classList.remove('active');
+  });
+
+  // Zavřít modal kliknutím mimo obsah
+  document.getElementById('modal-end').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+      document.getElementById('modal-end').classList.remove('active');
+    }
+  });
+
+  
+
+  loadCinnosti();
+
+  bridgeStatus();                                    // zjistit režim hned při načtení stránky
+  setInterval(() => { checkForChanges(); }, 5000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForChanges(); });
+</script>
+
+</body>
+</html>
