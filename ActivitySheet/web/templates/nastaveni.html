@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nastavení – Activity Sheet</title>
+<script src="/static/js/as-fx.js"></script>
+<script src="/static/js/as-window.js"></script>
+<link rel="icon" type="image/png" href="/static/assets/favicon/favicon192x192.png">
+<style>
+@import url('/static/fonts/inter.css');
+:root { --blue: #0d6efd; --ink: #212529; --muted: #5c636a; --line: #dee2e6; --soft: #f1f3f5; --red: #c92a2a; --green: #2b8a3e; --orange: #e67700; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; font-family: 'Inter', sans-serif; color: var(--ink); background: linear-gradient(135deg, #e9ecef, #f8f9fa); min-height: 100vh; }
+button, input { font-family: inherit; }
+
+.topbar { position: sticky; top: 0; z-index: 10; background: rgba(248, 249, 250, .94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.topbar-in { max-width: 920px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 10px; border-radius: 10px; color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 600; }
+.back:hover { background: var(--soft); color: var(--ink); }
+.title { display: flex; flex-direction: column; margin-right: auto; }
+.title h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.3px; }
+.title span { font-size: 13px; color: var(--muted); }
+.dirty { display: none; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #a34f00; }
+.dirty.on { display: inline-flex; }
+.dirty::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
+.btn { min-height: 44px; padding: 0 16px; border-radius: 10px; border: 1px solid #ced4da; background: #fff; color: var(--ink); font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.btn:hover { background: var(--soft); }
+.btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+.btn.primary:hover { filter: brightness(.94); background: var(--blue); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.sm { min-height: 40px; padding: 0 14px; font-size: 13px; border-radius: 8px; }
+
+main { max-width: 920px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 18px; }
+.card { background: #fff; border-radius: 16px; border: 1px solid #e9ecef; box-shadow: 0 2px 10px rgba(33, 37, 41, .05); padding: 20px 24px 8px; }
+.card h2 { margin: 0 0 4px; display: flex; align-items: center; gap: 10px; font-size: 17px; font-weight: 700; }
+.card h2 svg { color: var(--blue); }
+.row { display: flex; align-items: center; gap: 20px; padding: 16px 0; border-top: 1px solid var(--soft); flex-wrap: wrap; }
+.row:first-of-type { border-top: none; }
+.row-text { flex: 1 1 320px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.row-title { font-size: 15px; font-weight: 600; }
+.src-fx { width: 170px; height: 70px; flex: 0 0 auto; }
+.row-desc { font-size: 13px; color: var(--muted); line-height: 1.45; }
+
+.switch { width: 52px; height: 32px; flex: 0 0 52px; border-radius: 16px; border: none; padding: 4px; background: #ced4da; cursor: pointer; display: flex; transition: background .15s; }
+.switch::after { content: ""; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .25); transition: transform .15s; }
+.switch[aria-checked="true"] { background: var(--blue); }
+.switch[aria-checked="true"]::after { transform: translateX(20px); }
+.switch:disabled { opacity: .45; cursor: not-allowed; }
+.switch:focus-visible, .seg button:focus-visible { outline: 3px solid rgba(13, 110, 253, .35); outline-offset: 2px; }
+
+.seg { display: inline-flex; gap: 4px; padding: 4px; border-radius: 10px; background: var(--soft); flex-wrap: wrap; }
+.seg button { min-height: 40px; padding: 0 14px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; background: transparent; color: var(--muted); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: #fff; color: var(--ink); box-shadow: 0 1px 4px rgba(0, 0, 0, .12); }
+
+.field { height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid #ced4da; font-size: 14px; color: var(--ink); background: #fff; }
+.field:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 4px rgba(13, 110, 253, .12); }
+.field.mono { font-family: ui-monospace, Consolas, monospace; }
+.field.url { width: min(440px, 100%); }
+.field.num { width: 110px; }
+.unit { font-size: 13px; color: var(--muted); margin-left: -12px; }
+
+.status { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
+.status b { color: var(--ink); font-weight: 600; }
+.status .bad { color: var(--red); font-weight: 600; }
+.status .good { color: var(--green); font-weight: 600; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.pill.on { background: #e7f0ff; color: #0b4fc4; }
+
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; padding: 12px 18px; border-radius: 12px; background: #1f2937; color: #fff; font-size: 14px; font-weight: 600; box-shadow: 0 10px 30px rgba(0, 0, 0, .2); transition: opacity .2s, transform .2s; z-index: 50; max-width: calc(100% - 32px); }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+.toast.ok { background: var(--green); }
+.toast.err { background: var(--red); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <a class="back" href="/">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+      Activity Sheet
+    </a>
+    <div class="title"><h1>Nastavení</h1><span id="subtitle">Activity Sheet · tento počítač</span></div>
+    <span class="dirty" id="dirty">Neuložené změny</span>
+    <button class="btn primary" id="btn-save" type="button" disabled>
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      Uložit
+    </button>
+  </div>
+</div>
+
+<main>
+  <section class="card">
+    <h2><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg>Spouštění</h2>
+    <div class="row">
+      <div class="row-text"><span class="row-title" id="l-autostart">Spouštět po přihlášení do Windows</span><span class="row-desc">Program naběhne na pozadí s ikonkou v trayi u hodin.</span></div>
+      <button type="button" class="switch" role="switch" data-key="autostart" aria-labelledby="l-autostart"></button>
+    </div>
+    <div class="row">
+      <div class="row-text"><span class="row-title" id="l-open">Po spuštění otevřít okno</span><span class="row-desc">Jinak zůstane jen ikonka v trayi; okno otevřeš kliknutím na ni.</span></div>
+      <button type="button" class="switch" role="switch" data-key="open_on_start" aria-labelledby="l-open"></button>
+    </div>
+    <div class="row">
+      <div class="row-text"><span class="row-title" id="l-keep">Zavřením okna program neukončit</span><span class="row-desc">Zůstane v trayi a seznam se dál aktualizuje. Úplně ho ukončíš v menu ikonky.</span></div>
+      <button type="button" class="switch" role="switch" data-key="keep_running" aria-labelledby="l-keep"></button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/></svg>Režim</h2>
+    <div class="row">
+      <div class="row-text"><span class="row-title">Přihlašování na činnost</span><span class="row-desc">Automaticky: operátor pípne kartu a program vyplní warehouse sám. Běžně: čárový kód + warehouse jako dřív.</span></div>
+      <div class="seg" role="group" aria-label="Přihlašování na činnost" data-key="mode">
+        <button type="button" data-val="auto">Automaticky</button><button type="button" data-val="basic">Běžně</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="row-text"><span class="row-title">Kde otevírat Activity Sheet</span><span class="row-desc">Vlastní okno má zapnutou přístupnost pro automatické přihlášení a vlastní přihlášení do warehouse. Výchozí prohlížeč stačí pro běžný režim.</span></div>
+      <div class="seg" role="group" aria-label="Kde otevírat" data-key="browser">
+        <button type="button" data-val="">Podle režimu</button><button type="button" data-val="app">Vlastní okno</button><button type="button" data-val="browser">Výchozí prohlížeč</button>
+      </div>
+    </div>
+    <div class="row" id="row-input">
+      <div class="row-text"><span class="row-title">Způsob vkládání</span><span class="row-desc">UI Automation vloží hodnoty přímo do polí a klávesnici převezme jen na okamžik. Klávesnice je záloha.</span></div>
+      <div class="seg" role="group" aria-label="Způsob vkládání" data-key="input_mode">
+        <button type="button" data-val="uia">UI Automation</button><button type="button" data-val="keyboard">Klávesnice</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6v12M7 6v12M10 6v12M14 6v12M17 6v12M20 6v12"/></svg>Seznam činností</h2>
+    <div class="row">
+      <div class="row-text"><span class="row-title">Zdroj seznamu</span><span class="row-desc">Ze serveru: seznam spravuje správce a stáhne se sám. Vlastní: upravuješ si ho ve Správě jen pro tento počítač. Oba seznamy se drží zvlášť, přepnout můžeš kdykoli.</span></div>
+      <canvas class="src-fx" id="src-fx" width="170" height="70" aria-hidden="true" hidden></canvas>
+      <div class="seg" role="group" aria-label="Zdroj seznamu" data-key="source">
+        <button type="button" data-val="server">Ze serveru</button><button type="button" data-val="local">Vlastní</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="row-text"><span class="row-title"><label for="f-server">Adresa serveru</label></span><span class="row-desc">Odkud se seznam stahuje (kopie ze serveru se aktualizuje i při vlastním seznamu).</span></div>
+      <input class="field mono url" id="f-server" data-key="server_url" type="url" spellcheck="false">
+    </div>
+    <div class="row">
+      <div class="row-text"><span class="row-title"><label for="f-int">Interval kontroly</label></span><span class="row-desc">Jak často se ptát serveru na změny.</span></div>
+      <input class="field num" id="f-int" data-key="data_refresh_min" type="number" min="1" max="1440"><span class="unit">min</span>
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <span class="row-title">Stav</span>
+        <div class="status" id="status"></div>
+      </div>
+      <button type="button" class="btn sm primary" id="btn-merge" hidden>Přidat novinky</button>
+      <button type="button" class="btn sm" id="btn-sync">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>
+        Aktualizovat teď
+      </button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>O programu</h2>
+    <div class="row">
+      <div class="row-text"><span class="row-title">Složka programu</span><span class="row-desc" id="folder">Logy, zálohy seznamu, nastavení.</span></div>
+      <button type="button" class="btn sm" data-open="folder">Otevřít složku</button>
+      <button type="button" class="btn sm" data-open="log">Otevřít log</button>
+    </div>
+    <div class="row">
+      <div class="row-text"><span class="row-title"><label for="f-host">Adresa v prohlížeči</label></span><span class="row-desc">Musí končit na <b>.localhost</b> – prohlížeč ji vždy pošle na tento počítač, bez úprav systému. Teď: <a id="cur-url" href="/"></a></span></div>
+      <input class="field mono" id="f-host" data-key="hostname" type="text" spellcheck="false" style="width: 260px">
+    </div>
+    <div class="row">
+      <div class="row-text"><span class="row-title"><label for="f-port">Port</label></span><span class="row-desc">Výchozí 8080 (http://activity-sheet.localhost:8080). Když je port obsazený jiným programem, Activity Sheet si sám vezme 28000. Port 80 dá adresu bez čísla, ale často ho drží jiný program. Změna platí po restartu programu.</span></div>
+      <input class="field num mono" id="f-port" data-key="port" type="number" min="80" max="65535">
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  let saved = {};        // stav ze serveru
+  let draft = {};        // rozpracované změny
+
+  function toast(text, kind = '') {
+    const t = $('toast');
+    t.textContent = text;
+    t.className = `toast on ${kind}`;
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => t.classList.remove('on'), 3200);
+  }
+
+  async function post(path, body) {
+    const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+    let j = {};
+    try { j = await r.json(); } catch (e) { /* prázdné */ }
+    return { status: r.status, ...j };
+  }
+
+  const value = (k) => (k in draft ? draft[k] : saved[k]);
+
+  function fmtTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d)) return iso;
+    const today = new Date().toDateString() === d.toDateString();
+    return (today ? 'dnes ' : d.toLocaleDateString('cs-CZ') + ' ') + d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function renderStatus(v) {
+    const st = $('status');
+    st.innerHTML = '';
+    const line = (html) => { const d = document.createElement('div'); d.innerHTML = html; st.appendChild(d); };
+    const esc = (t) => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const src = v.settings.source;
+    const srv = v.server, loc = v.local;
+    line(`${src === 'server' ? '<span class="pill on">používá se</span> ' : ''}<b>Ze serveru:</b> `
+      + (srv ? `${srv.count} činností${srv.version ? ', verze ' + srv.version : ''}` : 'zatím nestaženo'));
+    line(`${src === 'local' ? '<span class="pill on">používá se</span> ' : ''}<b>Vlastní:</b> `
+      + (loc ? `${loc.count} činností, uloženo ${esc(fmtTime(loc.saved))}` : 'zatím nevytvořen (vznikne kopií serverového)'));
+    if (src === 'local' && v.local_updates) {
+      line(`<span class="bad" style="color:#a34f00">Na serveru jsou novinky: ${v.local_updates}</span> · přidáš je tlačítkem vpravo (tvoje úpravy zůstanou)`);
+    }
+    $('btn-merge').hidden = !(src === 'local' && v.local_updates);
+    const s = v.sync;
+    if (s.error) line(`<span class="bad">Server nedostupný:</span> ${esc(s.error)} · používá se uložená kopie`);
+    else if (s.last_ok) line(`<span class="good">Server v pořádku</span> · poslední kontrola ${esc(fmtTime(s.last_ok))}`);
+  }
+
+  function render(v) {
+    saved = { ...v.settings, autostart: v.autostart };
+    $('subtitle').textContent = `Activity Sheet ${v.version} · tento počítač`;
+    $('folder').textContent = v.folder;
+    $('cur-url').textContent = v.url; $('cur-url').href = v.url;
+    document.querySelectorAll('.switch').forEach(b => {
+      b.setAttribute('aria-checked', String(!!value(b.dataset.key)));
+      if (b.dataset.key === 'autostart') b.disabled = !v.can_autostart;
+    });
+    document.querySelectorAll('.seg').forEach(g => {
+      g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(String(value(g.dataset.key) ?? '') === b.dataset.val)));
+    });
+    document.querySelectorAll('input[data-key]').forEach(i => { if (document.activeElement !== i) i.value = value(i.dataset.key) ?? ''; });
+    $('row-input').hidden = value('mode') !== 'auto';
+    if (srcFx) srcFx.set(value('source') === 'local' ? -1 : 1);
+    renderStatus(v);
+    updateDirty();
+  }
+
+  function updateDirty() {
+    const dirty = Object.keys(draft).some(k => String(draft[k]) !== String(saved[k]));
+    $('dirty').classList.toggle('on', dirty);
+    $('btn-save').disabled = !dirty;
+  }
+
+  function set(key, val) {
+    draft[key] = val;
+    if (String(val) === String(saved[key])) delete draft[key];
+    render(lastView);
+  }
+
+  let lastView = null;
+  // tok dat u zdroje: server → tento PC (ze serveru), nebo jen tento PC (vlastní)
+  let srcFx = null;
+  if (typeof FX !== 'undefined' && !FX.reduce) {
+    $('src-fx').hidden = false;
+    srcFx = FX.mount($('src-fx'), 'source', { dir: 1 });
+  }
+  async function load() {
+    lastView = await fetch('/api/settings', { cache: 'no-store' }).then(r => r.json());
+    render(lastView);
+  }
+
+  document.querySelectorAll('.switch').forEach(b => b.addEventListener('click', () => set(b.dataset.key, !value(b.dataset.key))));
+  document.querySelectorAll('.seg').forEach(g => g.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (g.dataset.key === 'source' && b.dataset.val === 'local' && saved.source !== 'local' && !lastView.local) {
+      toast('Vlastní seznam vznikne po uložení jako kopie serverového.');
+    }
+    set(g.dataset.key, b.dataset.val);
+  }));
+  document.querySelectorAll('input[data-key]').forEach(i => i.addEventListener('input', () => {
+    draft[i.dataset.key] = i.type === 'number' ? Number(i.value) : i.value;
+    if (String(draft[i.dataset.key]) === String(saved[i.dataset.key])) delete draft[i.dataset.key];
+    updateDirty();
+  }));
+
+  async function save() {
+    if ($('btn-save').disabled) return;
+    $('btn-save').disabled = true;
+    const r = await post('/api/settings', { changes: draft });
+    if (r.settings) { draft = {}; lastView = r; render(r); }
+    if (r.ok) toast(r.restart ? 'Uloženo. Nová adresa platí po restartu programu (Ukončit v trayi a spustit znovu).' : 'Nastavení uloženo.', 'ok');
+    else toast((r.errors || [r.message || 'Uložení se nepovedlo.']).join(' '), 'err');
+    updateDirty();
+  }
+  $('btn-save').addEventListener('click', save);
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
+  });
+
+  $('btn-sync').addEventListener('click', async () => {
+    $('btn-sync').disabled = true;
+    const r = await post('/api/settings/sync');
+    $('btn-sync').disabled = false;
+    if (r.settings) { lastView = r; render(r); }
+    toast(r.ok ? 'Seznam ze serveru je aktuální.' : `Server nedostupný: ${r.message || ''}`, r.ok ? 'ok' : 'err');
+  });
+
+  $('btn-merge').addEventListener('click', async () => {
+    const r = await post('/api/local/merge');
+    toast(r.message || (r.ok ? 'Hotovo.' : 'Přidání se nepovedlo.'), r.ok ? 'ok' : 'err');
+    load();
+  });
+
+  document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => post('/api/settings/open-folder', { what: b.dataset.open })));
+
+  window.asBusy = () => !$('btn-save').disabled;      // neuložené nastavení
+  window.addEventListener('beforeunload', (e) => {
+    if (!$('btn-save').disabled) { e.preventDefault(); e.returnValue = ''; }
+  });
+
+  load().catch(() => toast('Nastavení nejde načíst – běží program Activity Sheet?', 'err'));
+</script>
+</body>
+</html>
